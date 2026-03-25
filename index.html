@@ -716,11 +716,17 @@
       border-radius: 12px;
       position: relative;
       overflow: hidden;
+      cursor: grab;
+    }
+    
+    .graph-container:active {
+      cursor: grabbing;
     }
     
     .graph-svg {
       width: 100%;
       height: 100%;
+      transition: transform 0.1s ease-out;
     }
     
     .graph-line {
@@ -1732,6 +1738,9 @@
     
     // Graph Search Modal
     let currentGraphEventId = null;
+    let graphTransform = { x: 0, y: 0, scale: 1 };
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
     
     function showGraphSearch() {
       document.getElementById('graphSearchModal').classList.remove('hidden');
@@ -1774,23 +1783,94 @@
     function openGraphView(eventId) {
       hideGraphSearch();
       currentGraphEventId = eventId;
+      graphTransform = { x: 0, y: 0, scale: 1 };
       showGraphView();
     }
     
     function showGraphView() {
       document.getElementById('graphViewModal').classList.remove('hidden');
       renderGraph(currentGraphEventId);
+      initGraphDrag();
     }
     
     function hideGraphView() {
       document.getElementById('graphViewModal').classList.add('hidden');
       currentGraphEventId = null;
+      graphTransform = { x: 0, y: 0, scale: 1 };
     }
     
     function editCurrentGraphEvent() {
       if (currentGraphEventId) {
         hideGraphView();
         showEditEvent(currentGraphEventId);
+      }
+    }
+    
+    // Initialize drag functionality for graph
+    function initGraphDrag() {
+      const container = document.getElementById('graphContainer');
+      const svg = container.querySelector('.graph-svg');
+      
+      if (!svg) return;
+      
+      // Mouse events
+      container.onmousedown = (e) => {
+        isDragging = true;
+        dragStart = { x: e.clientX - graphTransform.x, y: e.clientY - graphTransform.y };
+        container.style.cursor = 'grabbing';
+      };
+      
+      container.onmousemove = (e) => {
+        if (!isDragging) return;
+        graphTransform.x = e.clientX - dragStart.x;
+        graphTransform.y = e.clientY - dragStart.y;
+        updateGraphTransform();
+      };
+      
+      container.onmouseup = () => {
+        isDragging = false;
+        container.style.cursor = 'grab';
+      };
+      
+      container.onmouseleave = () => {
+        isDragging = false;
+        container.style.cursor = 'grab';
+      };
+      
+      // Touch events for mobile
+      container.ontouchstart = (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          dragStart = { x: e.touches[0].clientX - graphTransform.x, y: e.touches[0].clientY - graphTransform.y };
+        }
+      };
+      
+      container.ontouchmove = (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+        graphTransform.x = e.touches[0].clientX - dragStart.x;
+        graphTransform.y = e.touches[0].clientY - dragStart.y;
+        updateGraphTransform();
+      };
+      
+      container.ontouchend = () => {
+        isDragging = false;
+      };
+      
+      // Mouse wheel for zoom
+      container.onwheel = (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newScale = Math.min(Math.max(graphTransform.scale * delta, 0.5), 3);
+        graphTransform.scale = newScale;
+        updateGraphTransform();
+      };
+    }
+    
+    function updateGraphTransform() {
+      const svg = document.querySelector('.graph-svg');
+      if (svg) {
+        svg.style.transform = `translate(${graphTransform.x}px, ${graphTransform.y}px) scale(${graphTransform.scale})`;
       }
     }
     
@@ -1870,7 +1950,7 @@
       
       drawConnections(tree);
       
-      // Draw nodes
+      // Draw nodes - clicking any node opens edit modal for that event
       const drawNode = (node) => {
         const isRoot = node.level === 0;
         const contactText = node.contacts && node.contacts.length > 0 
@@ -1878,7 +1958,7 @@
           : '';
         
         svgContent += `
-          <g class="graph-node ${isRoot ? 'root' : ''}" onclick="editCurrentGraphEvent()" style="cursor: pointer;">
+          <g class="graph-node ${isRoot ? 'root' : ''}" onclick="openEventFromGraph('${node.id}')" style="cursor: pointer;">
             <rect x="${node.x}" y="${node.y}" width="${nodeWidth}" height="${nodeHeight}" 
               fill="${isRoot ? '#4f46e5' : 'rgba(255, 255, 255, 0.95)'}" 
               stroke="${isRoot ? '#818cf8' : '#4f46e5'}" 
@@ -1915,6 +1995,12 @@
       svgContent += '</svg>';
       
       container.innerHTML = svgContent;
+    }
+    
+    // Open event directly from graph - goes to edit modal, not main view
+    function openEventFromGraph(eventId) {
+      hideGraphView();
+      showEditEvent(eventId);
     }
     
     // Settings Modal
