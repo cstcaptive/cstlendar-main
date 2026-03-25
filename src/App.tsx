@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -246,6 +247,7 @@ export default function App() {
     setEditingEvent(event);
     setIsAddEventOpen(true);
   };
+
   const displayDays = useMemo(() => {
     return Array.from({ length: 4 }, (_, i) => {
       const d = new Date(startDate);
