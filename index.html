@@ -82,6 +82,24 @@
       background-color: #e2e8f0;
     }
     
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #0f172a;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    
+    .btn-icon:hover {
+      background-color: #1e293b;
+    }
+    
     .nav-arrows {
       display: flex;
       align-items: center;
@@ -319,6 +337,14 @@
       gap: 4px;
     }
     
+    .footer-btn.active {
+      color: #4f46e5;
+    }
+    
+    .footer-btn.inactive {
+      color: #cbd5e1;
+    }
+    
     .footer-icon {
       font-size: 32px;
     }
@@ -376,13 +402,31 @@
       border-radius: 24px;
       padding: 32px;
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
     
     .modal-title {
       font-size: 20px;
       font-weight: 900;
-      margin-bottom: 24px;
+    }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      background-color: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
     }
     
     .form-group {
@@ -411,9 +455,15 @@
       border-color: #4f46e5;
     }
     
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
     .modal-buttons {
       display: flex;
       gap: 12px;
+      margin-top: 24px;
     }
     
     .modal-btn {
@@ -445,8 +495,202 @@
       background-color: #4338ca;
     }
     
+    .modal-btn.danger {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .modal-btn.danger:hover {
+      background-color: #fecaca;
+    }
+    
     .hidden {
       display: none;
+    }
+    
+    .chat-container {
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background-color: #f8fafc;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .chat-message {
+      margin-bottom: 12px;
+      display: flex;
+    }
+    
+    .chat-message.user {
+      justify-content: flex-end;
+    }
+    
+    .chat-message.assistant {
+      justify-content: flex-start;
+    }
+    
+    .chat-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+    
+    .chat-message.user .chat-bubble {
+      background-color: #4f46e5;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .chat-message.assistant .chat-bubble {
+      background-color: white;
+      color: #0f172a;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .chat-input-container {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    
+    .chat-send {
+      padding: 12px 20px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .chat-send:hover {
+      background-color: #4338ca;
+    }
+    
+    .settings-section {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .settings-section:last-child {
+      border-bottom: none;
+    }
+    
+    .settings-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+    
+    .settings-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 8px;
+    }
+    
+    .settings-btn:hover {
+      background-color: #e2e8f0;
+    }
+    
+    .graph-container {
+      height: 400px;
+      background-color: #f8fafc;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .graph-node {
+      position: absolute;
+      background-color: white;
+      border: 2px solid #4f46e5;
+      border-radius: 12px;
+      padding: 12px;
+      min-width: 120px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .graph-node.root {
+      background-color: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+    
+    .graph-node-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    
+    .graph-node-date {
+      font-size: 10px;
+      color: #64748b;
+    }
+    
+    .graph-node.root .graph-node-date {
+      color: #c7d2fe;
+    }
+    
+    .search-results {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+    
+    .search-result-item {
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .search-result-item:hover {
+      background-color: #f8fafc;
+    }
+    
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    
+    .search-result-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+    }
+    
+    .search-result-date {
+      font-size: 12px;
+      color: #64748b;
     }
     
     /* Mobile responsive */
@@ -488,6 +732,10 @@
       .add-btn-container {
         top: -30px;
       }
+      
+      .modal {
+        padding: 24px;
+      }
     }
   </style>
 </head>
@@ -506,6 +754,7 @@
           <button class="nav-arrow" onclick="prevPage()">←</button>
           <button class="nav-arrow" onclick="nextPage()">→</button>
         </div>
+        <button class="btn-icon" onclick="showSettings()">⚙️</button>
       </div>
     </header>
 
@@ -541,7 +790,7 @@
 
     <!-- Bottom Navigation -->
     <footer class="footer">
-      <button class="footer-btn">
+      <button class="footer-btn active" onclick="showAIChat()">
         <span class="footer-icon">✨</span>
         <span class="footer-label">AI Chat</span>
       </button>
@@ -550,7 +799,7 @@
         <button class="add-btn" onclick="showAddEvent()">+</button>
       </div>
 
-      <button class="footer-btn">
+      <button class="footer-btn inactive" onclick="showGraphSearch()">
         <span class="footer-icon">🔗</span>
       </button>
     </footer>
@@ -559,7 +808,10 @@
   <!-- Add Event Modal -->
   <div class="modal-overlay hidden" id="addEventModal">
     <div class="modal">
-      <h2 class="modal-title">添加日程</h2>
+      <div class="modal-header">
+        <h2 class="modal-title">添加日程</h2>
+        <button class="modal-close" onclick="hideAddEvent()">×</button>
+      </div>
       
       <div class="form-group">
         <label class="form-label">标题</label>
@@ -576,9 +828,136 @@
         <input type="time" class="form-input" id="eventTime" value="09:00">
       </div>
       
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="eventAllDay"> 全天事件
+        </label>
+      </div>
+      
       <div class="modal-buttons">
         <button class="modal-btn cancel" onclick="hideAddEvent()">取消</button>
         <button class="modal-btn save" onclick="addEvent()">保存日程</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Event Modal -->
+  <div class="modal-overlay hidden" id="editEventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">编辑日程</h2>
+        <button class="modal-close" onclick="hideEditEvent()">×</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">标题</label>
+        <input type="text" class="form-input" id="editEventTitle">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input type="date" class="form-input" id="editEventDate">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">时间</label>
+        <input type="time" class="form-input" id="editEventTime">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="editEventAllDay"> 全天事件
+        </label>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="modal-btn danger" onclick="deleteEvent()">删除</button>
+        <button class="modal-btn save" onclick="updateEvent()">更新日程</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Chat Modal -->
+  <div class="modal-overlay hidden" id="aiChatModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">✨ AI 助手</h2>
+        <button class="modal-close" onclick="hideAIChat()">×</button>
+      </div>
+      
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-message assistant">
+            <div class="chat-bubble">你好！我是你的 CSTlendar 助手。有什么我可以帮你的吗？你可以问我关于日程的任何问题。</div>
+          </div>
+        </div>
+        
+        <div class="chat-input-container">
+          <input type="text" class="chat-input" id="chatInput" placeholder="问问你的日程安排..." onkeypress="handleChatKeyPress(event)">
+          <button class="chat-send" onclick="sendChatMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph Search Modal -->
+  <div class="modal-overlay hidden" id="graphSearchModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">🔗 关联图谱</h2>
+        <button class="modal-close" onclick="hideGraphSearch()">×</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">搜索日程</label>
+        <input type="text" class="form-input" id="graphSearchInput" placeholder="输入日程标题..." oninput="searchEvents()">
+        <div class="search-results hidden" id="searchResults">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+      
+      <div class="graph-container" id="graphContainer">
+        <p style="color: #64748b;">选择一个日程查看关联图谱</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">⚙️ 设置</h2>
+        <button class="modal-close" onclick="hideSettings()">×</button>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-title">AI 配置</div>
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input type="password" class="form-input" id="apiKey" placeholder="输入你的 API Key">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Base URL</label>
+          <input type="text" class="form-input" id="baseUrl" placeholder="https://api.openai.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">模型</label>
+          <input type="text" class="form-input" id="modelName" placeholder="gpt-3.5-turbo">
+        </div>
+        <button class="settings-btn" onclick="saveAIConfig()">保存 AI 配置</button>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-title">数据管理</div>
+        <button class="settings-btn" onclick="exportData()">📤 导出日程数据</button>
+        <button class="settings-btn" onclick="document.getElementById('importFile').click()">📥 导入日程数据</button>
+        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-title">关于</div>
+        <p style="font-size: 14px; color: #64748b;">CSTlendar v1.0.0</p>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 8px;">智能日程管理系统</p>
       </div>
     </div>
   </div>
@@ -587,6 +966,12 @@
     // Global state
     let startDate = new Date();
     let events = [];
+    let editingEventId = null;
+    let aiConfig = {
+      apiKey: '',
+      baseUrl: 'https://api.openai.com',
+      model: 'gpt-3.5-turbo'
+    };
     
     // Utility functions
     function formatDateToLocalISO(date) {
@@ -614,18 +999,23 @@
       };
     }
     
-    // Load events from localStorage
-    function loadEvents() {
+    // Load data from localStorage
+    function loadData() {
       try {
-        const saved = localStorage.getItem('smartflow_events');
-        if (saved) {
-          const parsed = JSON.parse(saved);
+        const savedEvents = localStorage.getItem('smartflow_events');
+        if (savedEvents) {
+          const parsed = JSON.parse(savedEvents);
           if (Array.isArray(parsed)) {
             events = parsed;
           }
         }
+        
+        const savedConfig = localStorage.getItem('smartflow_ai_config');
+        if (savedConfig) {
+          aiConfig = JSON.parse(savedConfig);
+        }
       } catch (e) {
-        console.error('Failed to load events', e);
+        console.error('Failed to load data', e);
       }
     }
     
@@ -635,6 +1025,21 @@
         localStorage.setItem('smartflow_events', JSON.stringify(events));
       } catch (e) {
         console.error('Failed to save events', e);
+      }
+    }
+    
+    // Save AI config to localStorage
+    function saveAIConfig() {
+      aiConfig.apiKey = document.getElementById('apiKey').value;
+      aiConfig.baseUrl = document.getElementById('baseUrl').value;
+      aiConfig.model = document.getElementById('modelName').value;
+      
+      try {
+        localStorage.setItem('smartflow_ai_config', JSON.stringify(aiConfig));
+        alert('AI 配置已保存');
+      } catch (e) {
+        console.error('Failed to save AI config', e);
+        alert('保存失败');
       }
     }
     
@@ -679,7 +1084,7 @@
         
         html += `<div class="all-day-column">`;
         dayEvents.forEach(event => {
-          html += `<div class="all-day-event" onclick="deleteEvent('${event.id}')">${event.title}</div>`;
+          html += `<div class="all-day-event" onclick="showEditEvent('${event.id}')">${event.title}</div>`;
         });
         html += `</div>`;
       });
@@ -728,7 +1133,7 @@
           const topOffset = (h - 8 + m / 60) * 48;
           
           html += `
-            <div class="event" style="top: ${topOffset}px; height: 32px;" onclick="deleteEvent('${event.id}')">
+            <div class="event" style="top: ${topOffset}px; height: 32px;" onclick="showEditEvent('${event.id}')">
               <div class="event-title">${event.title}</div>
               <div class="event-time">${event.startTime}</div>
             </div>
@@ -761,23 +1166,24 @@
       render();
     }
     
-    // Modal functions
+    // Add Event Modal
     function showAddEvent() {
       document.getElementById('addEventModal').classList.remove('hidden');
       document.getElementById('eventDate').value = formatDateToLocalISO(new Date());
       document.getElementById('eventTitle').value = '';
       document.getElementById('eventTime').value = '09:00';
+      document.getElementById('eventAllDay').checked = false;
     }
     
     function hideAddEvent() {
       document.getElementById('addEventModal').classList.add('hidden');
     }
     
-    // Event functions
     function addEvent() {
       const title = document.getElementById('eventTitle').value.trim();
       const date = document.getElementById('eventDate').value;
       const time = document.getElementById('eventTime').value;
+      const isAllDay = document.getElementById('eventAllDay').checked;
       
       if (!title) {
         alert('请输入日程标题');
@@ -788,8 +1194,8 @@
         id: Date.now().toString(),
         title: title,
         date: date,
-        startTime: time,
-        isAllDay: false,
+        startTime: isAllDay ? null : time,
+        isAllDay: isAllDay,
         contacts: [],
         reminder: { days: 0, hours: 0, minutes: 30 },
         createdAt: Date.now()
@@ -801,12 +1207,276 @@
       render();
     }
     
-    function deleteEvent(eventId) {
-      if (confirm('确定要删除这个日程吗？')) {
-        events = events.filter(e => e.id !== eventId);
+    // Edit Event Modal
+    function showEditEvent(eventId) {
+      const event = events.find(e => e.id === eventId);
+      if (!event) return;
+      
+      editingEventId = eventId;
+      document.getElementById('editEventModal').classList.remove('hidden');
+      document.getElementById('editEventTitle').value = event.title;
+      document.getElementById('editEventDate').value = event.date;
+      document.getElementById('editEventTime').value = event.startTime || '09:00';
+      document.getElementById('editEventAllDay').checked = event.isAllDay;
+    }
+    
+    function hideEditEvent() {
+      document.getElementById('editEventModal').classList.add('hidden');
+      editingEventId = null;
+    }
+    
+    function updateEvent() {
+      if (!editingEventId) return;
+      
+      const title = document.getElementById('editEventTitle').value.trim();
+      const date = document.getElementById('editEventDate').value;
+      const time = document.getElementById('editEventTime').value;
+      const isAllDay = document.getElementById('editEventAllDay').checked;
+      
+      if (!title) {
+        alert('请输入日程标题');
+        return;
+      }
+      
+      const eventIndex = events.findIndex(e => e.id === editingEventId);
+      if (eventIndex >= 0) {
+        events[eventIndex].title = title;
+        events[eventIndex].date = date;
+        events[eventIndex].startTime = isAllDay ? null : time;
+        events[eventIndex].isAllDay = isAllDay;
         saveEvents();
+      }
+      
+      hideEditEvent();
+      render();
+    }
+    
+    function deleteEvent() {
+      if (!editingEventId) return;
+      
+      if (confirm('确定要删除这个日程吗？')) {
+        events = events.filter(e => e.id !== editingEventId);
+        saveEvents();
+        hideEditEvent();
         render();
       }
+    }
+    
+    // AI Chat Modal
+    function showAIChat() {
+      document.getElementById('aiChatModal').classList.remove('hidden');
+    }
+    
+    function hideAIChat() {
+      document.getElementById('aiChatModal').classList.add('hidden');
+    }
+    
+    function handleChatKeyPress(event) {
+      if (event.key === 'Enter') {
+        sendChatMessage();
+      }
+    }
+    
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      // Add user message
+      const messagesContainer = document.getElementById('chatMessages');
+      messagesContainer.innerHTML += `
+        <div class="chat-message user">
+          <div class="chat-bubble">${message}</div>
+        </div>
+      `;
+      
+      input.value = '';
+      
+      // Scroll to bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      
+      // Simple AI response (without actual API call)
+      setTimeout(() => {
+        let response = '';
+        
+        if (message.includes('日程') || message.includes('安排')) {
+          const todayEvents = events.filter(e => e.date === formatDateToLocalISO(new Date()));
+          if (todayEvents.length > 0) {
+            response = `今天你有 ${todayEvents.length} 个日程：\n` + 
+              todayEvents.map(e => `- ${e.title} ${e.startTime || '(全天)'}`).join('\n');
+          } else {
+            response = '今天没有安排日程。';
+          }
+        } else if (message.includes('你好') || message.includes('hi')) {
+          response = '你好！我是你的 CSTlendar 助手。有什么我可以帮你的吗？';
+        } else {
+          response = '我理解你的问题。目前我是一个简单的助手，可以帮助你查看日程安排。如果你需要更智能的对话，请在设置中配置 AI API。';
+        }
+        
+        messagesContainer.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-bubble">${response}</div>
+          </div>
+        `;
+        
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }, 500);
+    }
+    
+    // Graph Search Modal
+    function showGraphSearch() {
+      document.getElementById('graphSearchModal').classList.remove('hidden');
+      document.getElementById('graphSearchInput').value = '';
+      document.getElementById('searchResults').classList.add('hidden');
+      document.getElementById('graphContainer').innerHTML = '<p style="color: #64748b;">选择一个日程查看关联图谱</p>';
+    }
+    
+    function hideGraphSearch() {
+      document.getElementById('graphSearchModal').classList.add('hidden');
+    }
+    
+    function searchEvents() {
+      const query = document.getElementById('graphSearchInput').value.trim().toLowerCase();
+      const resultsContainer = document.getElementById('searchResults');
+      
+      if (!query) {
+        resultsContainer.classList.add('hidden');
+        return;
+      }
+      
+      const filteredEvents = events.filter(e => 
+        e.title.toLowerCase().includes(query)
+      );
+      
+      if (filteredEvents.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item"><div class="search-result-title">未找到匹配的日程</div></div>';
+      } else {
+        resultsContainer.innerHTML = filteredEvents.map(event => `
+          <div class="search-result-item" onclick="showGraph('${event.id}')">
+            <div class="search-result-title">${event.title}</div>
+            <div class="search-result-date">${event.date} ${event.startTime || '(全天)'}</div>
+          </div>
+        `).join('');
+      }
+      
+      resultsContainer.classList.remove('hidden');
+    }
+    
+    function showGraph(eventId) {
+      const event = events.find(e => e.id === eventId);
+      if (!event) return;
+      
+      const container = document.getElementById('graphContainer');
+      
+      // Simple graph visualization
+      container.innerHTML = `
+        <div class="graph-node root" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+          <div class="graph-node-title">${event.title}</div>
+          <div class="graph-node-date">${event.date}</div>
+        </div>
+      `;
+      
+      // Add related events (simple implementation)
+      const relatedEvents = events.filter(e => 
+        e.id !== event.id && 
+        (e.date === event.date || e.title.includes(event.title.substring(0, 3)))
+      ).slice(0, 4);
+      
+      relatedEvents.forEach((relatedEvent, index) => {
+        const angle = (index * 90) * Math.PI / 180;
+        const radius = 120;
+        const x = 50 + Math.cos(angle) * radius / 4;
+        const y = 50 + Math.sin(angle) * radius / 4;
+        
+        container.innerHTML += `
+          <div class="graph-node" style="left: ${x}%; top: ${y}%; transform: translate(-50%, -50%);">
+            <div class="graph-node-title">${relatedEvent.title}</div>
+            <div class="graph-node-date">${relatedEvent.date}</div>
+          </div>
+        `;
+      });
+      
+      document.getElementById('searchResults').classList.add('hidden');
+    }
+    
+    // Settings Modal
+    function showSettings() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+      document.getElementById('apiKey').value = aiConfig.apiKey || '';
+      document.getElementById('baseUrl').value = aiConfig.baseUrl || 'https://api.openai.com';
+      document.getElementById('modelName').value = aiConfig.model || 'gpt-3.5-turbo';
+    }
+    
+    function hideSettings() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+    
+    // Export data
+    function exportData() {
+      const data = {
+        version: '1.0.0',
+        exportDate: new Date().toISOString(),
+        data: {
+          events: events,
+          aiConfig: aiConfig
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `cstlendar_backup_${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('数据导出成功');
+    }
+    
+    // Import data
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const content = e.target.result;
+          const backup = JSON.parse(content);
+          
+          if (!backup.version || !backup.data) {
+            throw new Error('无效的备份文件格式');
+          }
+          
+          if (backup.data.events) {
+            events = backup.data.events;
+            saveEvents();
+          }
+          
+          if (backup.data.aiConfig) {
+            aiConfig = backup.data.aiConfig;
+            localStorage.setItem('smartflow_ai_config', JSON.stringify(aiConfig));
+          }
+          
+          render();
+          alert('数据导入成功');
+        } catch (err) {
+          console.error('Import failed:', err);
+          alert('导入失败：' + err.message);
+        }
+      };
+      
+      reader.onerror = function() {
+        alert('文件读取失败');
+      };
+      
+      reader.readAsText(file);
+      event.target.value = '';
     }
     
     // Main render function
@@ -819,7 +1489,7 @@
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      loadEvents();
+      loadData();
       render();
       
       // Set initial date for the form
