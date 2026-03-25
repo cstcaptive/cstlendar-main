@@ -1,22 +1,830 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-    <script>
-      window.process = {
-        env: {},
-        version: '',
-        versions: {},
-        platform: '',
-        arch: ''
-      };
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSTlendar - 智能日程管理</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: white;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #4f46e5;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    
+    .logo-text {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      font-style: italic;
+      text-transform: uppercase;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn {
+      padding: 6px 16px;
+      background-color: #f1f5f9;
+      color: #4f46e5;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn:hover {
+      background-color: #e2e8f0;
+    }
+    
+    .nav-arrows {
+      display: flex;
+      align-items: center;
+      background-color: #f1f5f9;
+      border-radius: 9999px;
+      padding: 4px;
+    }
+    
+    .nav-arrow {
+      padding: 4px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+    }
+    
+    .date-bar {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr 1fr 1fr;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    
+    .month-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #4f46e5;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    .day-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+    }
+    
+    .day-name {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+    }
+    
+    .day-name.today {
+      color: #4f46e5;
+    }
+    
+    .day-number {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 4px 0;
+      color: #1e293b;
+    }
+    
+    .day-number.today {
+      color: #4f46e5;
+    }
+    
+    .all-day-section {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr 1fr 1fr;
+      border-bottom: 1px solid #f1f5f9;
+      min-height: 60px;
+    }
+    
+    .all-day-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #f8fafc;
+    }
+    
+    .all-day-text {
+      font-size: 10px;
+      font-weight: 900;
+      color: #a5b4fc;
+      text-transform: uppercase;
+      transform: rotate(-90deg);
+      letter-spacing: 0.2em;
+    }
+    
+    .all-day-events {
+      grid-column: span 4;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .all-day-column {
+      border-right: 1px solid #f8fafc;
+      height: 100%;
+      padding: 4px;
+    }
+    
+    .all-day-column:last-child {
+      border-right: none;
+    }
+    
+    .all-day-event {
+      background-color: #4f46e5;
+      color: white;
+      font-size: 9px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+    
+    .time-grid {
+      flex: 1;
+      overflow-y: auto;
+      background-color: white;
+      position: relative;
+    }
+    
+    .grid-container {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr 1fr 1fr;
+      min-height: 100%;
+    }
+    
+    .time-column {
+      background-color: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      border-right: 1px solid #f1f5f9;
+    }
+    
+    .time-slot {
+      height: 48px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 8px;
+    }
+    
+    .time-label {
+      font-size: 10px;
+      font-weight: bold;
+      color: #cbd5e1;
+    }
+    
+    .grid-columns {
+      grid-column: span 4;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      position: relative;
+    }
+    
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    
+    .grid-line {
+      height: 48px;
+      border-bottom: 1px solid #f1f5f9;
+      width: 100%;
+    }
+    
+    .day-column-grid {
+      border-right: 1px solid #f1f5f9;
+      height: 100%;
+      position: relative;
+    }
+    
+    .day-column-grid:last-child {
+      border-right: none;
+    }
+    
+    .event {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      background-color: rgba(79, 70, 229, 0.1);
+      border-left: 4px solid #4f46e5;
+      border-radius: 0 8px 8px 0;
+      padding: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .event:hover {
+      background-color: rgba(79, 70, 229, 0.2);
+    }
+    
+    .event-title {
+      font-size: 10px;
+      font-weight: 900;
+      color: #4338ca;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .event-time {
+      font-size: 8px;
+      font-weight: bold;
+      color: #818cf8;
+    }
+    
+    .footer {
+      height: 96px;
+      border-top: 1px solid #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 32px;
+      position: relative;
+      background-color: white;
+    }
+    
+    .footer-btn {
+      padding: 12px;
+      color: #4f46e5;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .footer-icon {
+      font-size: 32px;
+    }
+    
+    .footer-label {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .add-btn-container {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .add-btn {
+      width: 80px;
+      height: 80px;
+      background-color: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.3);
+      border: 4px solid white;
+      cursor: pointer;
+      font-size: 40px;
+      transition: transform 0.2s;
+    }
+    
+    .add-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .add-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    
+    .modal {
+      background-color: white;
+      border-radius: 24px;
+      padding: 32px;
+      width: 90%;
+      max-width: 400px;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .modal-btn.cancel {
+      background-color: #f1f5f9;
+      color: #64748b;
+    }
+    
+    .modal-btn.cancel:hover {
+      background-color: #e2e8f0;
+    }
+    
+    .modal-btn.save {
+      flex: 2;
+      background-color: #4f46e5;
+      color: white;
+    }
+    
+    .modal-btn.save:hover {
+      background-color: #4338ca;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: 12px 16px;
+      }
+      
+      .logo-text {
+        font-size: 16px;
+      }
+      
+      .date-bar {
+        grid-template-columns: 50px 1fr 1fr 1fr 1fr;
+      }
+      
+      .day-number {
+        font-size: 20px;
+      }
+      
+      .all-day-section {
+        grid-template-columns: 50px 1fr 1fr 1fr 1fr;
+      }
+      
+      .grid-container {
+        grid-template-columns: 50px 1fr 1fr 1fr 1fr;
+      }
+      
+      .footer {
+        padding: 0 16px;
+      }
+      
+      .add-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+      }
+      
+      .add-btn-container {
+        top: -30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">📅</div>
+        <h1 class="logo-text">CSTlendar</h1>
+      </div>
+      
+      <div class="nav-buttons">
+        <button class="btn" onclick="goToday()">Today</button>
+        <div class="nav-arrows">
+          <button class="nav-arrow" onclick="prevPage()">←</button>
+          <button class="nav-arrow" onclick="nextPage()">→</button>
+        </div>
+      </div>
+    </header>
 
+    <!-- Date Bar -->
+    <div class="date-bar" id="dateBar">
+      <!-- Will be populated by JavaScript -->
+    </div>
+
+    <!-- All Day Section -->
+    <div class="all-day-section">
+      <div class="all-day-label">
+        <span class="all-day-text">All Day</span>
+      </div>
+      <div class="all-day-events" id="allDayEvents">
+        <!-- Will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Main Grid Area -->
+    <div class="time-grid">
+      <div class="grid-container">
+        <!-- Time Column -->
+        <div class="time-column" id="timeColumn">
+          <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Grid Columns -->
+        <div class="grid-columns" id="gridColumns">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <footer class="footer">
+      <button class="footer-btn">
+        <span class="footer-icon">✨</span>
+        <span class="footer-label">AI Chat</span>
+      </button>
+      
+      <div class="add-btn-container">
+        <button class="add-btn" onclick="showAddEvent()">+</button>
+      </div>
+
+      <button class="footer-btn">
+        <span class="footer-icon">🔗</span>
+      </button>
+    </footer>
+  </div>
+
+  <!-- Add Event Modal -->
+  <div class="modal-overlay hidden" id="addEventModal">
+    <div class="modal">
+      <h2 class="modal-title">添加日程</h2>
+      
+      <div class="form-group">
+        <label class="form-label">标题</label>
+        <input type="text" class="form-input" id="eventTitle" placeholder="输入日程标题">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input type="date" class="form-input" id="eventDate">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">时间</label>
+        <input type="time" class="form-input" id="eventTime" value="09:00">
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="modal-btn cancel" onclick="hideAddEvent()">取消</button>
+        <button class="modal-btn save" onclick="addEvent()">保存日程</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global state
+    let startDate = new Date();
+    let events = [];
+    
+    // Utility functions
+    function formatDateToLocalISO(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    
+    function formatDateInfo(date) {
+      const today = new Date();
+      const isToday = date.getDate() === today.getDate() && 
+                      date.getMonth() === today.getMonth() && 
+                      date.getFullYear() === today.getFullYear();
+      
+      const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    
+      return {
+        date,
+        dayName: isToday ? '今天' : days[date.getDay()],
+        dayNumber: date.getDate(),
+        monthName: months[date.getMonth()],
+        isToday
+      };
+    }
+    
+    // Load events from localStorage
+    function loadEvents() {
+      try {
+        const saved = localStorage.getItem('smartflow_events');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            events = parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load events', e);
+      }
+    }
+    
+    // Save events to localStorage
+    function saveEvents() {
+      try {
+        localStorage.setItem('smartflow_events', JSON.stringify(events));
+      } catch (e) {
+        console.error('Failed to save events', e);
+      }
+    }
+    
+    // Calculate display days
+    function getDisplayDays() {
+      return Array.from({ length: 4 }, (_, i) => {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        return formatDateInfo(d);
+      });
+    }
+    
+    // Render date bar
+    function renderDateBar() {
+      const dateBar = document.getElementById('dateBar');
+      const displayDays = getDisplayDays();
+      
+      let html = `<div class="month-label">${displayDays[0].monthName}</div>`;
+      
+      displayDays.forEach(day => {
+        html += `
+          <div class="day-column">
+            <span class="day-name ${day.isToday ? 'today' : ''}">${day.dayName}</span>
+            <span class="day-number ${day.isToday ? 'today' : ''}">${day.dayNumber}</span>
+          </div>
+        `;
+      });
+      
+      dateBar.innerHTML = html;
+    }
+    
+    // Render all day events
+    function renderAllDayEvents() {
+      const allDayEvents = document.getElementById('allDayEvents');
+      const displayDays = getDisplayDays();
+      
+      let html = '';
+      
+      displayDays.forEach((day, idx) => {
+        const dayStr = formatDateToLocalISO(day.date);
+        const dayEvents = events.filter(e => e.date === dayStr && e.isAllDay);
+        
+        html += `<div class="all-day-column">`;
+        dayEvents.forEach(event => {
+          html += `<div class="all-day-event" onclick="deleteEvent('${event.id}')">${event.title}</div>`;
+        });
+        html += `</div>`;
+      });
+      
+      allDayEvents.innerHTML = html;
+    }
+    
+    // Render time column
+    function renderTimeColumn() {
+      const timeColumn = document.getElementById('timeColumn');
+      const hours = Array.from({ length: 15 }, (_, i) => i + 8); // 8:00 to 22:00
+      
+      let html = '';
+      hours.forEach(hour => {
+        html += `
+          <div class="time-slot">
+            <span class="time-label">${hour}:00</span>
+          </div>
+        `;
+      });
+      
+      timeColumn.innerHTML = html;
+    }
+    
+    // Render grid columns
+    function renderGridColumns() {
+      const gridColumns = document.getElementById('gridColumns');
+      const displayDays = getDisplayDays();
+      const hours = Array.from({ length: 15 }, (_, i) => i + 8);
+      
+      let html = `
+        <div class="grid-lines">
+          ${hours.map(hour => `<div class="grid-line"></div>`).join('')}
+        </div>
+      `;
+      
+      displayDays.forEach((day, dayIdx) => {
+        const dayStr = formatDateToLocalISO(day.date);
+        const dayEvents = events.filter(e => e.date === dayStr && !e.isAllDay);
+        
+        html += `<div class="day-column-grid">`;
+        
+        dayEvents.forEach(event => {
+          if (!event.startTime) return;
+          const [h, m] = event.startTime.split(':').map(Number);
+          const topOffset = (h - 8 + m / 60) * 48;
+          
+          html += `
+            <div class="event" style="top: ${topOffset}px; height: 32px;" onclick="deleteEvent('${event.id}')">
+              <div class="event-title">${event.title}</div>
+              <div class="event-time">${event.startTime}</div>
+            </div>
+          `;
+        });
+        
+        html += `</div>`;
+      });
+      
+      gridColumns.innerHTML = html;
+    }
+    
+    // Navigation functions
+    function prevPage() {
+      const newDate = new Date(startDate);
+      newDate.setDate(startDate.getDate() - 4);
+      startDate = newDate;
+      render();
+    }
+    
+    function nextPage() {
+      const newDate = new Date(startDate);
+      newDate.setDate(startDate.getDate() + 4);
+      startDate = newDate;
+      render();
+    }
+    
+    function goToday() {
+      startDate = new Date();
+      render();
+    }
+    
+    // Modal functions
+    function showAddEvent() {
+      document.getElementById('addEventModal').classList.remove('hidden');
+      document.getElementById('eventDate').value = formatDateToLocalISO(new Date());
+      document.getElementById('eventTitle').value = '';
+      document.getElementById('eventTime').value = '09:00';
+    }
+    
+    function hideAddEvent() {
+      document.getElementById('addEventModal').classList.add('hidden');
+    }
+    
+    // Event functions
+    function addEvent() {
+      const title = document.getElementById('eventTitle').value.trim();
+      const date = document.getElementById('eventDate').value;
+      const time = document.getElementById('eventTime').value;
+      
+      if (!title) {
+        alert('请输入日程标题');
+        return;
+      }
+      
+      const newEvent = {
+        id: Date.now().toString(),
+        title: title,
+        date: date,
+        startTime: time,
+        isAllDay: false,
+        contacts: [],
+        reminder: { days: 0, hours: 0, minutes: 30 },
+        createdAt: Date.now()
+      };
+      
+      events.push(newEvent);
+      saveEvents();
+      hideAddEvent();
+      render();
+    }
+    
+    function deleteEvent(eventId) {
+      if (confirm('确定要删除这个日程吗？')) {
+        events = events.filter(e => e.id !== eventId);
+        saveEvents();
+        render();
+      }
+    }
+    
+    // Main render function
+    function render() {
+      renderDateBar();
+      renderAllDayEvents();
+      renderTimeColumn();
+      renderGridColumns();
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      loadEvents();
+      render();
+      
+      // Set initial date for the form
+      document.getElementById('eventDate').value = formatDateToLocalISO(new Date());
+    });
+  </script>
+</body>
+</html>
