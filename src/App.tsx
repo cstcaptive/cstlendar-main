@@ -278,7 +278,7 @@ export default function App() {
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
             <CalendarIcon className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-xl font-black tracking-tighter italic uppercase">CSTlendar</h1>
+          <h1 className="text-xl font-black tracking-tighter italic uppercase">SmartFlow</h1>
         </div>
         
         <div className="flex items-center gap-2">
