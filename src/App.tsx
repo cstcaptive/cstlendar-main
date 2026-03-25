@@ -1,24 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
-import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  Calendar as CalendarIcon, 
-  Sparkles,
-  Settings2,
-  Network
-} from 'lucide-react';
-import { motion } from 'motion/react';
-import { TimeGrid } from './components/TimeGrid';
-import { TIME_CONFIG } from './constants/config';
-import { MonthPickerPatch1 } from './components/MonthPickerPatch1';
-import { SettingsModalPatch2 } from './components/SettingsModalPatch2';
-import { AddEventModalPatch3 } from './components/AddEventModalPatch3';
-import { GraphSearchModalPatch4 } from './components/GraphSearchModalPatch4';
-import { RelationGraphPatch4 } from './components/RelationGraphPatch4';
-import { AIChatModalPatch5 } from './components/AIChatModalPatch5';
-import { ScheduleEventPatch3 } from './types/patch3';
+import React, { useState, useMemo, useEffect } from 'react';
 
 // --- Types ---
 interface DateInfo {
