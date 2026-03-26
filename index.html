@@ -1582,6 +1582,11 @@
     
     function renderContactsEdit() {
       const container = document.getElementById('editContactList');
+      // 确保总是显示至少一个联系人输入框
+      if (editContacts.length === 0) {
+        editContacts = [{ name: '', phone: '', email: '' }];
+      }
+      
       container.innerHTML = editContacts.map((contact, index) => `
         <div class="contact-item">
           <button class="remove-contact-btn" onclick="removeContactEdit(${index})">删除</button>
