@@ -1,29 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  Calendar as CalendarIcon, 
+  Sparkles,
+  Settings2,
+  Network
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { TimeGrid } from './components/TimeGrid';
+import { TIME_CONFIG } from './constants/config';
+import { MonthPickerPatch1 } from './components/MonthPickerPatch1';
+import { SettingsModalPatch2 } from './components/SettingsModalPatch2';
+import { AddEventModalPatch3 } from './components/AddEventModalPatch3';
+import { GraphSearchModalPatch4 } from './components/GraphSearchModalPatch4';
+import { RelationGraphPatch4 } from './components/RelationGraphPatch4';
+import { AIChatModalPatch5 } from './components/AIChatModalPatch5';
+import { ScheduleEventPatch3 } from './types/patch3';
 
-// Simple types
-interface ScheduleEvent {
-  id: string;
-  title: string;
-  date: string;
-  startTime?: string;
-  isAllDay: boolean;
-  contacts: any[];
-  reminder: { days: number; hours: number; minutes: number };
-  parentId?: string;
-  createdAt: number;
-  recurringGroupId?: string;
-  recurringSequence?: number;
+// --- Types ---
+interface DateInfo {
+  date: Date;
+  dayName: string;
+  dayNumber: number;
+  monthName: string;
+  weekNumber: number;
+  isToday: boolean;
 }
 
-// Simple utility functions
-const formatDateToLocalISO = (date: Date): string => {
+// --- Utils ---
+const getWeekNumber = (d: Date): number => {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+};
+
+export const formatDateToLocalISO = (date: Date): string => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 };
 
-const formatDateInfo = (date: Date) => {
+const shiftDate = (dateStr: string, daysToShift: number): string => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + daysToShift);
+  return formatDateToLocalISO(d);
+};
+
+const getDaysDiff = (dateStr1: string, dateStr2: string): number => {
+  const d1 = new Date(dateStr1);
+  const d2 = new Date(dateStr2);
+  return Math.round((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const formatDateInfo = (date: Date): DateInfo => {
   const today = new Date();
   const isToday = date.getDate() === today.getDate() && 
                   date.getMonth() === today.getMonth() && 
@@ -37,153 +71,24 @@ const formatDateInfo = (date: Date) => {
     dayName: isToday ? '今天' : days[date.getDay()],
     dayNumber: date.getDate(),
     monthName: months[date.getMonth()],
+    weekNumber: getWeekNumber(date),
     isToday
   };
 };
 
-// Simple TimeGrid component
-const SimpleTimeGrid = ({ displayDays, events, onEventClick }: any) => {
-  const hours = Array.from({ length: 15 }, (_, i) => i + 8); // 8:00 to 22:00
+// --- Components ---
 
-  return (
-    <div style={{ 
-      flex: 1, 
-      overflowY: 'auto', 
-      backgroundColor: 'white',
-      position: 'relative'
-    }}>
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '60px 1fr 1fr 1fr 1fr',
-        minHeight: '100%'
-      }}>
-        {/* Time Column */}
-        <div style={{ 
-          backgroundColor: 'rgba(255,255,255,0.9)', 
-          backdropFilter: 'blur(8px)',
-          position: 'sticky',
-          left: 0,
-          zIndex: 10,
-          borderRight: '1px solid #f1f5f9'
-        }}>
-          {hours.map((hour) => (
-            <div 
-              key={hour} 
-              style={{ 
-                height: '48px', 
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                justifyContent: 'center', 
-                paddingTop: '8px'
-              }}
-            >
-              <span style={{ 
-                fontSize: '10px', 
-                fontWeight: 'bold', 
-                color: '#cbd5e1'
-              }}>
-                {hour}:00
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Grid Columns */}
-        <div style={{ 
-          gridColumn: 'span 4', 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(4, 1fr)', 
-          position: 'relative'
-        }}>
-          {/* Horizontal Lines */}
-          <div style={{ 
-            position: 'absolute', 
-            inset: 0, 
-            pointerEvents: 'none'
-          }}>
-            {hours.map((hour) => (
-              <div 
-                key={hour} 
-                style={{ 
-                  height: '48px', 
-                  borderBottom: '1px solid #f1f5f9', 
-                  width: '100%'
-                }}
-              ></div>
-            ))}
-          </div>
-          
-          {/* Vertical Columns & Events */}
-          {displayDays.map((day: any, dayIdx: number) => {
-            const dayStr = formatDateToLocalISO(day.date);
-            const dayEvents = events.filter((e: ScheduleEvent) => e.date === dayStr && !e.isAllDay);
-
-            return (
-              <div key={dayIdx} style={{ 
-                borderRight: dayIdx < 3 ? '1px solid #f1f5f9' : 'none', 
-                height: '100%', 
-                position: 'relative'
-              }}>
-                {dayEvents.map((event: ScheduleEvent) => {
-                  if (!event.startTime) return null;
-                  const [h, m] = event.startTime.split(':').map(Number);
-                  const topOffset = (h - 8 + m / 60) * 48;
-                  
-                  return (
-                    <div 
-                      key={event.id}
-                      onClick={() => onEventClick(event)}
-                      style={{ 
-                        position: 'absolute',
-                        left: '4px',
-                        right: '4px',
-                        top: `${topOffset}px`,
-                        height: '32px',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderLeft: '4px solid #4f46e5',
-                        borderRadius: '0 8px 8px 0',
-                        padding: '4px',
-                        overflow: 'hidden',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <div style={{ 
-                        fontSize: '10px', 
-                        fontWeight: '900', 
-                        color: '#4338ca',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {event.title}
-                      </div>
-                      <div style={{ 
-                        fontSize: '8px', 
-                        fontWeight: 'bold', 
-                        color: '#818cf8'
-                      }}>
-                        {event.startTime}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Main App component
 export default function App() {
   const [startDate, setStartDate] = useState(new Date());
-  const [events, setEvents] = useState<ScheduleEvent[]>([]);
-  const [showAddEvent, setShowAddEvent] = useState(false);
-  const [newEventTitle, setNewEventTitle] = useState('');
-  const [newEventDate, setNewEventDate] = useState(formatDateToLocalISO(new Date()));
-  const [newEventTime, setNewEventTime] = useState('09:00');
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isGraphSearchOpen, setIsGraphSearchOpen] = useState(false);
+  const [isGraphViewOpen, setIsGraphViewOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [selectedGraphRoot, setSelectedGraphRoot] = useState<ScheduleEventPatch3 | null>(null);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEventPatch3 | null>(null);
+  const [events, setEvents] = useState<ScheduleEventPatch3[]>([]);
 
   // Load events from localStorage
   useEffect(() => {
@@ -200,49 +105,155 @@ export default function App() {
     }
   }, []);
 
-  // Save events to localStorage
-  const saveEvents = (newEvents: ScheduleEvent[]) => {
-    setEvents(newEvents);
+  // Notification Engine (Patch 3)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      events.forEach(event => {
+        if (!event.startTime) return; // Skip all-day for now or handle differently
+        
+        const eventDate = new Date(`${event.date}T${event.startTime}`);
+        const reminderTime = new Date(eventDate.getTime());
+        reminderTime.setDate(reminderTime.getDate() - event.reminder.days);
+        reminderTime.setHours(reminderTime.getHours() - event.reminder.hours);
+        reminderTime.setMinutes(reminderTime.getMinutes() - event.reminder.minutes);
+
+        // If current time matches reminder time (within 1 minute precision)
+        if (Math.abs(now.getTime() - reminderTime.getTime()) < 60000) {
+          // Check if already notified in this session to avoid duplicates
+          const notifiedKey = `notified_${event.id}_${reminderTime.getTime()}`;
+          try {
+            if (!sessionStorage.getItem(notifiedKey)) {
+              if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(`日程提醒: ${event.title}`, {
+                  body: `事件将于 ${event.startTime} 开始`,
+                  icon: '/favicon.ico'
+                });
+              } else {
+                alert(`🔔 提醒: ${event.title}\n即将于 ${event.startTime} 开始`);
+              }
+              sessionStorage.setItem(notifiedKey, 'true');
+            }
+          } catch (e) {
+            console.error('Notification error', e);
+          }
+        }
+      });
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [events]);
+
+  // Request notification permission
+  useEffect(() => {
     try {
-      localStorage.setItem('smartflow_events', JSON.stringify(newEvents));
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    } catch (e) {
+      console.error('Failed to request notification permission', e);
+    }
+  }, []);
+
+  const handleSaveEvent = (newEvent: ScheduleEventPatch3, scope?: 'this' | 'following' | 'all', recurringCount: number = 1) => {
+    let updatedEvents = [...events];
+    
+    if (!editingEvent) {
+      // Creation
+      if (recurringCount > 1) {
+        const groupId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        for (let i = 0; i < recurringCount; i++) {
+          const d = new Date(newEvent.date);
+          d.setDate(d.getDate() + i * 7);
+          updatedEvents.push({
+            ...newEvent,
+            id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36),
+            date: formatDateToLocalISO(d),
+            recurringGroupId: groupId,
+            recurringSequence: i + 1
+          });
+        }
+      } else {
+        updatedEvents.push(newEvent);
+      }
+    } else {
+      // Editing
+      if (!newEvent.recurringGroupId || scope === 'this' || !scope) {
+        const idx = updatedEvents.findIndex(e => e.id === newEvent.id);
+        if (idx >= 0) updatedEvents[idx] = newEvent;
+      } else {
+        const oldEvent = events.find(e => e.id === newEvent.id)!;
+        const daysDiff = getDaysDiff(newEvent.date, oldEvent.date);
+        
+        updatedEvents = updatedEvents.map(e => {
+          if (e.recurringGroupId === newEvent.recurringGroupId) {
+            const isTarget = scope === 'all' || (scope === 'following' && e.recurringSequence! >= newEvent.recurringSequence!);
+            if (isTarget) {
+              if (e.id === newEvent.id) return newEvent;
+              // Apply changes to other instances
+              return {
+                ...newEvent,
+                id: e.id, // keep original id
+                date: shiftDate(e.date, daysDiff), // shift date by same amount
+                recurringGroupId: e.recurringGroupId,
+                recurringSequence: e.recurringSequence,
+                createdAt: e.createdAt
+              };
+            }
+          }
+          return e;
+        });
+      }
+    }
+    
+    setEvents(updatedEvents);
+    try {
+      localStorage.setItem('smartflow_events', JSON.stringify(updatedEvents));
     } catch (e) {
       console.error('Failed to save events', e);
     }
+    setEditingEvent(null);
   };
 
-  // Add new event
-  const handleAddEvent = () => {
-    if (!newEventTitle.trim()) return;
-    
-    const newEvent: ScheduleEvent = {
-      id: Date.now().toString(),
-      title: newEventTitle,
-      date: newEventDate,
-      startTime: newEventTime,
-      isAllDay: false,
-      contacts: [],
-      reminder: { days: 0, hours: 0, minutes: 30 },
-      createdAt: Date.now()
-    };
-    
-    saveEvents([...events, newEvent]);
-    setNewEventTitle('');
-    setShowAddEvent(false);
+  const handleDeleteEvent = (eventId: string, scope?: 'this' | 'following' | 'all') => {
+    setEvents(prev => {
+      const eventToDelete = prev.find(e => e.id === eventId);
+      let updated = prev;
+      
+      if (!eventToDelete?.recurringGroupId || scope === 'this' || !scope) {
+        updated = prev.filter(e => e.id !== eventId);
+      } else {
+        updated = prev.filter(e => {
+          if (e.recurringGroupId === eventToDelete.recurringGroupId) {
+            if (scope === 'all') return false;
+            if (scope === 'following' && e.recurringSequence! >= eventToDelete.recurringSequence!) return false;
+          }
+          return true;
+        });
+      }
+      
+      try {
+        localStorage.setItem('smartflow_events', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save events', e);
+      }
+      return updated;
+    });
+    setIsAddEventOpen(false);
   };
 
-  // Delete event
-  const handleDeleteEvent = (eventId: string) => {
-    saveEvents(events.filter(e => e.id !== eventId));
+  const handleEditEvent = (event: ScheduleEventPatch3) => {
+    setEditingEvent(event);
+    setIsAddEventOpen(true);
   };
+  const displayDays = useMemo(() => {
+    return Array.from({ length: 4 }, (_, i) => {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      return formatDateInfo(d);
+    });
+  }, [startDate]);
 
-  // Calculate display days
-  const displayDays = Array.from({ length: 4 }, (_, i) => {
-    const d = new Date(startDate);
-    d.setDate(startDate.getDate() + i);
-    return formatDateInfo(d);
-  });
-
-  // Navigation functions
   const handlePrevPage = () => {
     const newDate = new Date(startDate);
     newDate.setDate(startDate.getDate() - 4);
@@ -260,190 +271,81 @@ export default function App() {
   };
 
   return (
-    <div style={{ 
-      position: 'absolute', 
-      inset: 0, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      backgroundColor: 'white', 
-      color: '#0f172a', 
-      fontFamily: 'Inter, sans-serif', 
-      overflow: 'hidden'
-    }}>
+    <div className="absolute inset-0 flex flex-col bg-white text-slate-900 font-sans overflow-hidden">
       {/* Header */}
-      <header style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        padding: '16px 24px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            backgroundColor: '#4f46e5', 
-            borderRadius: '12px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.2)'
-          }}>
-            <span style={{ color: 'white', fontSize: '20px' }}>📅</span>
+      <header className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+            <CalendarIcon className="text-white w-6 h-6" />
           </div>
-          <h1 style={{ 
-            fontSize: '20px', 
-            fontWeight: '900', 
-            letterSpacing: '-0.05em', 
-            fontStyle: 'italic', 
-            textTransform: 'uppercase'
-          }}>CSTlendar</h1>
+          <h1 className="text-xl font-black tracking-tighter italic uppercase">SmartFlow</h1>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           <button 
             onClick={handleGoToday}
-            style={{ 
-              padding: '6px 16px', 
-              backgroundColor: '#f1f5f9', 
-              color: '#4f46e5', 
-              fontSize: '14px', 
-              fontWeight: 'bold', 
-              borderRadius: '9999px', 
-              border: 'none', 
-              cursor: 'pointer'
-            }}
+            className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-indigo-600 text-sm font-bold rounded-full transition-colors uppercase tracking-wider"
           >
             Today
           </button>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            backgroundColor: '#f1f5f9', 
-            borderRadius: '9999px', 
-            padding: '4px'
-          }}>
-            <button onClick={handlePrevPage} style={{ 
-              padding: '4px', 
-              backgroundColor: 'transparent', 
-              border: 'none', 
-              cursor: 'pointer'
-            }}>
-              <span style={{ fontSize: '20px' }}>←</span>
+          <div className="flex items-center bg-slate-100 rounded-full p-1">
+            <button onClick={handlePrevPage} className="p-1 hover:bg-white rounded-full transition-all">
+              <ChevronLeft className="w-5 h-5 text-slate-600" />
             </button>
-            <button onClick={handleNextPage} style={{ 
-              padding: '4px', 
-              backgroundColor: 'transparent', 
-              border: 'none', 
-              cursor: 'pointer'
-            }}>
-              <span style={{ fontSize: '20px' }}>→</span>
+            <button onClick={handleNextPage} className="p-1 hover:bg-white rounded-full transition-all">
+              <ChevronRight className="w-5 h-5 text-slate-600" />
             </button>
           </div>
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white hover:bg-slate-800 transition-colors"
+          >
+            <Settings2 className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
       {/* Date Bar */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '60px 1fr 1fr 1fr 1fr', 
-        borderBottom: '1px solid #f1f5f9', 
-        paddingBottom: '8px', 
-        cursor: 'pointer'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          color: '#4f46e5', 
-          fontWeight: 'bold', 
-          fontSize: '14px'
-        }}>
+      <div 
+        className="grid grid-cols-[60px_1fr_1fr_1fr_1fr] border-b border-slate-100 pb-2 cursor-pointer hover:bg-slate-50 transition-colors"
+        onClick={() => setIsMonthPickerOpen(true)}
+      >
+        <div className="flex flex-col items-center justify-center text-indigo-600 font-bold text-sm">
           {displayDays[0].monthName}
         </div>
         {displayDays.map((day, idx) => (
-          <div key={idx} style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            padding: '8px 0'
-          }}>
-            <span style={{ 
-              fontSize: '10px', 
-              fontWeight: 'bold', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.1em', 
-              color: day.isToday ? '#4f46e5' : '#94a3b8'
-            }}>
+          <div key={idx} className="flex flex-col items-center py-2">
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${day.isToday ? 'text-indigo-600' : 'text-slate-400'}`}>
               {day.dayName}
             </span>
-            <span style={{ 
-              fontSize: '24px', 
-              fontWeight: '900', 
-              lineHeight: 1, 
-              margin: '4px 0', 
-              color: day.isToday ? '#4f46e5' : '#1e293b'
-            }}>
+            <span className={`text-2xl font-black leading-none my-1 ${day.isToday ? 'text-indigo-600' : 'text-slate-800'}`}>
               {day.dayNumber}
+            </span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase">
+              W{day.weekNumber}
             </span>
           </div>
         ))}
       </div>
 
       {/* All Day Section */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '60px 1fr 1fr 1fr 1fr', 
-        borderBottom: '1px solid #f1f5f9', 
-        minHeight: '60px'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          borderRight: '1px solid #f8fafc'
-        }}>
-          <span style={{ 
-            fontSize: '10px', 
-            fontWeight: '900', 
-            color: '#a5b4fc', 
-            textTransform: 'uppercase', 
-            transform: 'rotate(-90deg)', 
-            letterSpacing: '0.2em'
-          }}>
+      <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr] border-b border-slate-100 min-h-[60px]">
+        <div className="flex items-center justify-center border-r border-slate-50">
+          <span className="text-[10px] font-black text-indigo-300 uppercase -rotate-90 tracking-[0.2em]">
             All Day
           </span>
         </div>
-        <div style={{ 
-          gridColumn: 'span 4', 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(4, 1fr)'
-        }}>
+        <div className="col-span-4 grid grid-cols-4">
           {displayDays.map((day, idx) => {
             const dayStr = formatDateToLocalISO(day.date);
             const allDayEvents = events.filter(e => e.date === dayStr && e.isAllDay);
             return (
-              <div key={idx} style={{ 
-                borderRight: idx < 3 ? '1px solid #f8fafc' : 'none', 
-                height: '100%', 
-                padding: '4px'
-              }}>
+              <div key={idx} className="border-r border-slate-50 last:border-r-0 h-full p-1 space-y-1">
                 {allDayEvents.map(event => (
                   <div 
                     key={event.id} 
-                    onClick={() => handleDeleteEvent(event.id)}
-                    style={{ 
-                      backgroundColor: '#4f46e5', 
-                      color: 'white', 
-                      fontSize: '9px', 
-                      fontWeight: 'bold', 
-                      padding: '2px 6px', 
-                      borderRadius: '4px', 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      cursor: 'pointer'
-                    }}
+                    onClick={() => handleEditEvent(event)}
+                    className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate cursor-pointer hover:bg-indigo-700 transition-colors"
                   >
                     {event.title}
                   </div>
@@ -454,201 +356,100 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Grid Area */}
-      <SimpleTimeGrid displayDays={displayDays} events={events} onEventClick={handleDeleteEvent} />
+      {/* Main Grid Area (Scrollable) */}
+      <TimeGrid displayDays={displayDays} events={events} onEventClick={handleEditEvent} />
 
       {/* Bottom Navigation */}
-      <footer style={{ 
-        height: '96px', 
-        borderTop: '1px solid #f8fafc', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-around', 
-        padding: '0 32px', 
-        position: 'relative', 
-        backgroundColor: 'white'
-      }}>
-        <button style={{ 
-          padding: '12px', 
-          color: '#4f46e5', 
-          backgroundColor: 'transparent', 
-          border: 'none', 
-          cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <span style={{ fontSize: '32px' }}>✨</span>
-          <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>AI Chat</span>
+      <footer className="h-24 border-t border-slate-50 flex items-center justify-around px-8 relative bg-white">
+        <button 
+          onClick={() => setIsAIChatOpen(true)}
+          className="p-3 text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all flex flex-col items-center gap-1"
+        >
+          <Sparkles className="w-8 h-8" />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">AI Chat</span>
         </button>
         
         {/* Floating Action Button */}
-        <div style={{ 
-          position: 'absolute', 
-          top: '-40px', 
-          left: '50%', 
-          transform: 'translateX(-50%)'
-        }}>
-          <button 
-            onClick={() => setShowAddEvent(true)}
-            style={{ 
-              width: '80px', 
-              height: '80px', 
-              backgroundColor: '#4f46e5', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              color: 'white', 
-              boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)', 
-              border: '4px solid white', 
-              cursor: 'pointer',
-              fontSize: '40px'
-            }}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2">
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsAddEventOpen(true)}
+            className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-indigo-300 border-4 border-white"
           >
-            +
-          </button>
+            <Plus className="w-10 h-10" />
+          </motion.button>
         </div>
 
-        <button style={{ 
-          padding: '12px', 
-          color: '#cbd5e1', 
-          backgroundColor: 'transparent', 
-          border: 'none', 
-          cursor: 'pointer'
-        }}>
-          <span style={{ fontSize: '32px' }}>🔗</span>
+        <button 
+          id="footer-graph-button"
+          onClick={() => setIsGraphSearchOpen(true)}
+          className="p-3 text-slate-300 hover:bg-slate-50 rounded-2xl transition-all"
+        >
+          <Network className="w-8 h-8" />
         </button>
       </footer>
 
-      {/* Add Event Modal */}
-      {showAddEvent && (
-        <div style={{ 
-          position: 'fixed', 
-          inset: 0, 
-          backgroundColor: 'rgba(15, 23, 42, 0.6)', 
-          backdropFilter: 'blur(8px)',
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          zIndex: 50
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '24px', 
-            padding: '32px', 
-            width: '90%', 
-            maxWidth: '400px'
-          }}>
-            <h2 style={{ 
-              fontSize: '20px', 
-              fontWeight: '900', 
-              marginBottom: '24px'
-            }}>添加日程</h2>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '12px', 
-                fontWeight: 'bold', 
-                color: '#64748b', 
-                marginBottom: '8px'
-              }}>标题</label>
-              <input
-                type="text"
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-                placeholder="输入日程标题"
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '2px solid #e2e8f0', 
-                  borderRadius: '12px', 
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '12px', 
-                fontWeight: 'bold', 
-                color: '#64748b', 
-                marginBottom: '8px'
-              }}>日期</label>
-              <input
-                type="date"
-                value={newEventDate}
-                onChange={(e) => setNewEventDate(e.target.value)}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '2px solid #e2e8f0', 
-                  borderRadius: '12px', 
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '12px', 
-                fontWeight: 'bold', 
-                color: '#64748b', 
-                marginBottom: '8px'
-              }}>时间</label>
-              <input
-                type="time"
-                value={newEventTime}
-                onChange={(e) => setNewEventTime(e.target.value)}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '2px solid #e2e8f0', 
-                  borderRadius: '12px', 
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button 
-                onClick={() => setShowAddEvent(false)}
-                style={{ 
-                  flex: 1, 
-                  padding: '12px', 
-                  backgroundColor: '#f1f5f9', 
-                  color: '#64748b', 
-                  border: 'none', 
-                  borderRadius: '12px', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer'
-                }}
-              >
-                取消
-              </button>
-              <button 
-                onClick={handleAddEvent}
-                style={{ 
-                  flex: 2, 
-                  padding: '12px', 
-                  backgroundColor: '#4f46e5', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '12px', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer'
-                }}
-              >
-                保存日程
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* PATCH1: Month Picker Modal */}
+      <MonthPickerPatch1 
+        isOpen={isMonthPickerOpen}
+        onClose={() => setIsMonthPickerOpen(false)}
+        onSelectDate={(date) => setStartDate(date)}
+        initialDate={startDate}
+      />
+
+      {/* PATCH2: AI Settings Modal */}
+      <SettingsModalPatch2 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* PATCH3: Add Event Modal */}
+      <AddEventModalPatch3 
+        isOpen={isAddEventOpen}
+        onClose={() => {
+          setIsAddEventOpen(false);
+          setEditingEvent(null);
+        }}
+        onSave={handleSaveEvent}
+        onDelete={handleDeleteEvent}
+        editingEvent={editingEvent}
+      />
+
+      {/* PATCH4: Relation Graph */}
+      <GraphSearchModalPatch4 
+        isOpen={isGraphSearchOpen}
+        onClose={() => setIsGraphSearchOpen(false)}
+        events={events}
+        onSelect={(event) => {
+          setSelectedGraphRoot(event);
+          setIsGraphSearchOpen(false);
+          setIsGraphViewOpen(true);
+        }}
+      />
+
+      {selectedGraphRoot && (
+        <RelationGraphPatch4 
+          isOpen={isGraphViewOpen}
+          onClose={() => setIsGraphViewOpen(false)}
+          rootEvent={selectedGraphRoot}
+          allEvents={events}
+        />
       )}
+
+      {/* PATCH5: AI Global Chat */}
+      <AIChatModalPatch5 
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        events={events}
+        onViewGraph={(eventId) => {
+          const event = events.find(e => e.id === eventId);
+          if (event) {
+            setSelectedGraphRoot(event);
+            setIsGraphViewOpen(true);
+          }
+        }}
+      />
     </div>
   );
 }
