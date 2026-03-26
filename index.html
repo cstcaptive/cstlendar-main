@@ -1417,6 +1417,15 @@
           phone: c.phone || '',
           email: c.email || ''
         }));
+        
+        // 自动填入第一个联系人到输入框
+        if (currentContacts.length > 0) {
+          const firstContact = currentContacts[0];
+          document.getElementById('contactName').value = firstContact.name;
+          document.getElementById('contactPhone').value = firstContact.phone;
+          document.getElementById('contactEmail').value = firstContact.email;
+        }
+        
         renderContacts();
       }
       
