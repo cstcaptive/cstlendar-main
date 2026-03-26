@@ -1129,6 +1129,60 @@
     </div>
   </div>
 
+  <!-- AI Recognition Preview Modal -->
+  <div class="modal-overlay hidden" id="aiPreviewModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">🔍 AI 识别结果</h2>
+        <button class="modal-close" onclick="hideAIRecognitionPreview()">×</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">原始输入</label>
+        <div class="form-input" style="background-color: #f8fafc; border-color: #e2e8f0;">{{originalInput}}</div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">识别结果</label>
+        <div id="aiPreviewContent" style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+          <!-- JSON content will be displayed here -->
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">提取的信息</label>
+        <div style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <strong>标题：</strong><span id="previewTitle"></span>
+            </div>
+            <div>
+              <strong>日期：</strong><span id="previewDate"></span>
+            </div>
+            <div>
+              <strong>时间：</strong><span id="previewTime"></span>
+            </div>
+            <div>
+              <strong>全天：</strong><span id="previewAllDay"></span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 10px;">
+            <strong>关联人：</strong>
+            <div id="previewContacts" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
+              <!-- Contacts will be displayed here -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="modal-btn cancel" onclick="hideAIRecognitionPreview()">取消</button>
+        <button class="modal-btn save" onclick="applyAIRecognition()">应用识别结果</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
   <div class="modal-overlay hidden" id="settingsModal">
     <div class="modal">
@@ -1290,6 +1344,73 @@
       }
     }
     
+    // AI Recognition Preview Modal Functions
+    function showAIRecognitionPreview(parsedData, originalInput) {
+      const modal = document.getElementById('aiPreviewModal');
+      const previewContent = document.getElementById('aiPreviewContent');
+      const previewTitle = document.getElementById('previewTitle');
+      const previewDate = document.getElementById('previewDate');
+      const previewTime = document.getElementById('previewTime');
+      const previewAllDay = document.getElementById('previewAllDay');
+      const previewContacts = document.getElementById('previewContacts');
+      
+      // Display original input
+      modal.querySelector('.form-input').textContent = originalInput;
+      
+      // Display JSON content
+      previewContent.textContent = JSON.stringify(parsedData, null, 2);
+      
+      // Display extracted information
+      previewTitle.textContent = parsedData.title || '未识别';
+      previewDate.textContent = parsedData.date || '未识别';
+      previewTime.textContent = parsedData.time || '未识别';
+      previewAllDay.textContent = parsedData.isAllDay ? '是' : '否';
+      
+      // Display contacts
+      if (parsedData.contacts && parsedData.contacts.length > 0) {
+        previewContacts.innerHTML = parsedData.contacts.map(contact => `
+          <span style="background-color: #eef2ff; padding: 4px 8px; border-radius: 6px; font-size: 11px; border: 1px solid #e2e8f0;">
+            ${contact.name || '未知'} ${contact.phone ? `(${contact.phone})` : ''} ${contact.email ? `(${contact.email})` : ''}
+          </span>
+        `).join('');
+      } else {
+        previewContacts.innerHTML = '<span style="color: #94a3b8; font-size: 11px;">未识别到关联人</span>';
+      }
+      
+      // Store the parsed data for later use
+      window.currentAIRecognitionData = parsedData;
+      
+      modal.classList.remove('hidden');
+    }
+    
+    function hideAIRecognitionPreview() {
+      document.getElementById('aiPreviewModal').classList.add('hidden');
+      window.currentAIRecognitionData = null;
+    }
+    
+    function applyAIRecognition() {
+      const data = window.currentAIRecognitionData;
+      if (!data) return;
+      
+      // Fill the form fields
+      document.getElementById('eventTitle').value = data.title || '';
+      document.getElementById('eventDate').value = data.date || formatDateToLocalISO(new Date());
+      document.getElementById('eventTime').value = data.time || '09:00';
+      document.getElementById('eventAllDay').checked = data.isAllDay || false;
+      
+      // Handle contacts
+      if (data.contacts && data.contacts.length > 0) {
+        currentContacts = data.contacts.map(c => ({
+          name: c.name || '',
+          phone: c.phone || '',
+          email: c.email || ''
+        }));
+        renderContacts();
+      }
+      
+      hideAIRecognitionPreview();
+    }
+    
     // AI Recognition using user's API
     async function recognizeAI() {
       const input = document.getElementById('aiInput').value.trim();
@@ -1364,21 +1485,7 @@
           const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-            document.getElementById('eventTitle').value = parsed.title || input;
-            document.getElementById('eventDate').value = parsed.date || formatDateToLocalISO(new Date());
-            document.getElementById('eventTime').value = parsed.time || '09:00';
-            document.getElementById('eventAllDay').checked = parsed.isAllDay || false;
-            
-            // Handle contacts
-            if (parsed.contacts && parsed.contacts.length > 0) {
-              currentContacts = parsed.contacts.map(c => ({
-                name: c.name || '',
-                phone: c.phone || '',
-                email: c.email || ''
-              }));
-              // 重新渲染联系人输入框
-              renderContacts();
-            }
+            showAIRecognitionPreview(parsed, input);
             return;
           }
         }
