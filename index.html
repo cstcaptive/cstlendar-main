@@ -1135,11 +1135,19 @@
         </div>
         <div class="form-group">
           <label class="form-label">Base URL</label>
-          <input type="text" class="form-input" id="baseUrl" placeholder="https://api.openai.com">
+          <input type="text" class="form-input" id="baseUrl" placeholder="https://www.chataiapi.com">
         </div>
         <div class="form-group">
           <label class="form-label">模型</label>
-          <input type="text" class="form-input" id="modelName" placeholder="gpt-3.5-turbo">
+          <input type="text" class="form-input" id="modelName" placeholder="gemini-2.5-flash">
+        </div>
+        <div class="form-group">
+          <label class="form-label">连接状态</label>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="connectionStatus" style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+            <span id="connectionText" style="font-size: 12px; color: #64748b;">未测试</span>
+            <button class="settings-btn" onclick="testAIConnection()" style="margin-left: auto; padding: 6px 12px; font-size: 12px;">测试连接</button>
+          </div>
         </div>
         <button class="settings-btn" onclick="saveAIConfig()">保存 AI 配置</button>
       </div>
@@ -1155,6 +1163,26 @@
         <div class="settings-title">关于</div>
         <p style="font-size: 12px; color: #64748b;">CSTlendar v1.0.0</p>
         <p style="font-size: 11px; color: #94a3b8; margin-top: 6px;">智能日程管理系统</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Recognition Result Modal -->
+  <div class="modal-overlay hidden" id="aiResultModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🤖 AI 识别结果</h2>
+        <button class="modal-close" onclick="hideAIResult()">×</button>
+      </div>
+      
+      <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+        <h3 style="font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 8px;">提取的 JSON 数据</h3>
+        <pre id="aiResultJson" style="font-size: 12px; color: #0f172a; background-color: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <button class="modal-btn cancel" onclick="hideAIResult()">关闭</button>
+        <button class="modal-btn save" onclick="applyAIResult()">应用到表单</button>
       </div>
     </div>
   </div>
@@ -2178,6 +2206,160 @@
       renderAllDayEvents();
       renderTimeColumn();
       renderGridColumns();
+    }
+    
+    // Test AI Connection
+    async function testAIConnection() {
+      const aiConfig = getAIConfig();
+      if (!aiConfig.apiKey) {
+        alert('请先在设置中配置 AI API');
+        return;
+      }
+      
+      const statusDot = document.getElementById('connectionStatus');
+      const statusText = document.getElementById('connectionText');
+      
+      statusText.textContent = '测试中...';
+      statusDot.style.backgroundColor = '#f59e0b';
+      
+      try {
+        const response = await fetch(aiConfig.baseUrl + '/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + aiConfig.apiKey
+          },
+          body: JSON.stringify({
+            model: aiConfig.model,
+            messages: [
+              { role: 'system', content: '你是一个测试助手，只需回复"连接成功"。' },
+              { role: 'user', content: '测试连接' }
+            ],
+            temperature: 0,
+            max_tokens: 10
+          })
+        });
+        
+        if (response.ok) {
+          statusText.textContent = '连接成功';
+          statusDot.style.backgroundColor = '#22c55e';
+          alert('AI 连接测试成功！');
+        } else {
+          throw new Error('HTTP ' + response.status);
+        }
+      } catch (err) {
+        console.error('Connection test failed:', err);
+        statusText.textContent = '连接失败';
+        statusDot.style.backgroundColor = '#ef4444';
+        alert('AI 连接测试失败：' + err.message);
+      }
+    }
+    
+    // AI Recognition with Result Display
+    async function recognizeAI() {
+      const input = document.getElementById('aiInput').value.trim();
+      if (!input) return;
+      
+      const aiConfig = getAIConfig();
+      if (!aiConfig.apiKey) {
+        alert('请先在设置中配置 AI API');
+        return;
+      }
+      
+      setIsRecognizing(true);
+      try {
+        const result = await callAIRecognition(aiConfig, input);
+        
+        // Show result modal
+        showAIResult(result);
+        
+        // Also apply to form
+        if (result.title) {
+          document.getElementById('eventTitle').value = result.title;
+        }
+        if (result.date) {
+          document.getElementById('eventDate').value = result.date;
+        }
+        if (result.startTime) {
+          document.getElementById('eventTime').value = result.startTime;
+        }
+        if (result.isAllDay !== undefined) {
+          document.getElementById('eventAllDay').checked = result.isAllDay;
+        }
+        if (result.contacts) {
+          currentContacts = result.contacts;
+          renderContacts();
+        }
+      } catch (err) {
+        console.error('AI Recognition Error:', err);
+        alert(err.message || 'AI 识别失败，请检查网络或 API 配置');
+      } finally {
+        setIsRecognizing(false);
+      }
+    }
+    
+    async function recognizeAIEdit() {
+      const input = document.getElementById('editAiInput').value.trim();
+      if (!input) return;
+      
+      const aiConfig = getAIConfig();
+      if (!aiConfig.apiKey) {
+        alert('请先在设置中配置 AI API');
+        return;
+      }
+      
+      setIsRecognizing(true);
+      try {
+        const result = await callAIRecognition(aiConfig, input);
+        
+        // Show result modal
+        showAIResult(result);
+        
+        // Also apply to form
+        if (result.title) {
+          document.getElementById('editEventTitle').value = result.title;
+        }
+        if (result.date) {
+          document.getElementById('editEventDate').value = result.date;
+        }
+        if (result.startTime) {
+          document.getElementById('editEventTime').value = result.startTime;
+        }
+        if (result.isAllDay !== undefined) {
+          document.getElementById('editEventAllDay').checked = result.isAllDay;
+        }
+        if (result.contacts) {
+          editContacts = result.contacts;
+          renderContactsEdit();
+        }
+      } catch (err) {
+        console.error('AI Recognition Error:', err);
+        alert(err.message || 'AI 识别失败，请检查网络或 API 配置');
+      } finally {
+        setIsRecognizing(false);
+      }
+    }
+    
+    // AI Result Modal Functions
+    function showAIResult(result) {
+      const modal = document.getElementById('aiResultModal');
+      const jsonDisplay = document.getElementById('aiResultJson');
+      
+      // Format JSON with indentation
+      const formattedJson = JSON.stringify(result, null, 2);
+      jsonDisplay.textContent = formattedJson;
+      
+      modal.classList.remove('hidden');
+    }
+    
+    function hideAIResult() {
+      document.getElementById('aiResultModal').classList.add('hidden');
+    }
+    
+    function applyAIResult() {
+      // This function is called when user clicks "应用到表单"
+      // The form is already updated in recognizeAI/recognizeAIEdit functions
+      hideAIResult();
     }
     
     // Initialize
