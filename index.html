@@ -1345,7 +1345,7 @@
     }
     
     // AI Recognition Preview Modal Functions
-    function showAIRecognitionPreview(parsedData, originalInput) {
+    function showAIRecognitionPreview(parsedData, originalInput, isAISuccess = true) {
       const modal = document.getElementById('aiPreviewModal');
       const previewContent = document.getElementById('aiPreviewContent');
       const previewTitle = document.getElementById('previewTitle');
@@ -1360,8 +1360,17 @@
         originalInputDisplay.textContent = originalInput;
       }
       
-      // Display JSON content
-      previewContent.textContent = JSON.stringify(parsedData, null, 2);
+      // Display recognition status
+      const statusText = isAISuccess ? '✅ AI识别成功' : '⚠️ 本地解析（AI识别失败）';
+      const statusColor = isAISuccess ? '#10b981' : '#f59e0b';
+      
+      // Display JSON content with status
+      previewContent.innerHTML = `
+        <div style="margin-bottom: 8px; padding: 6px 10px; background-color: ${statusColor}20; border-radius: 6px; font-size: 11px; color: ${statusColor}; font-weight: bold;">
+          ${statusText}
+        </div>
+        <pre style="margin: 0; white-space: pre-wrap;">${JSON.stringify(parsedData, null, 2)}</pre>
+      `;
       
       // Display extracted information
       previewTitle.textContent = parsedData.title || '未识别';
@@ -1446,24 +1455,53 @@
   ]
 }
 当前日期：${formatDateToLocalISO(new Date())}
+当前星期：${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date().getDay()]}
+
 重要规则：
 1. 如果没有识别到具体时间，time设为null，isAllDay设为true
 2. 如果识别到具体时间，time设为该时间，isAllDay设为false
-3. 识别标题中的人物信息，包括：
+3. 时间处理规则（非常重要）：
+   - "下午3点" = "15:00"（不是03:00）
+   - "下午3:30" = "15:30"
+   - "上午9点" = "09:00"
+   - "上午9:30" = "09:30"
+   - "晚上8点" = "20:00"
+   - "晚上8:30" = "20:30"
+   - "中午12点" = "12:00"
+   - "凌晨2点" = "02:00"
+   - 如果只说"3点"没有上午/下午，默认为"15:00"（下午）
+4. 日期处理规则（非常重要）：
+   - "下周X"：从今天开始，找到下一个星期X的日期
+   - "下周一" = 下一个星期一
+   - "下周二" = 下一个星期二
+   - "下周三" = 下一个星期三
+   - "下周四" = 下一个星期四
+   - "下周五" = 下一个星期五
+   - "下周六" = 下一个星期六
+   - "下周日" = 下一个星期日
+   - "这周X"：本周的星期X（如果已过，则为下周）
+   - "大后天" = 今天+3天
+   - "下周" = 今天+7天
+   - "下个月" = 下个月的今天
+5. 识别标题中的人物信息，包括：
    - 完整姓名（如：张三、李四、王五）
    - 姓氏+名字（如：小王、小李、老张）
    - 姓氏+先生/女士/太太（如：王先生、李女士、张太太）
    - 英文名（如：Tom、Mary、John）
    - 职位称呼（如：经理、老师、医生）
    - 亲属称呼（如：爸爸、妈妈、哥哥）
-4. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
-5. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
-6. 如果没有指定日期，默认为今天
-7. 支持中文日期表达：明天、后天、大后天
+6. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
+7. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
 
 示例：
 输入："明天下午3点和小王13800138000开会"
 输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
+
+输入："下周一上午9点和张三讨论项目"
+输出：{"title":"讨论项目","date":"下周一的日期","time":"09:00","isAllDay":false,"contacts":[{"name":"张三","phone":"","email":""}]}
+
+输入："下周三下午2点开会"
+输出：{"title":"开会","date":"下周三的日期","time":"14:00","isAllDay":false,"contacts":[]}
 
 输入："后天和王先生test@email.com吃饭"
 输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"王先生","phone":"","email":"test@email.com"}]}
@@ -1503,16 +1541,46 @@
       let title = input;
       let isAllDay = true;
       
+      // 处理时间 - 支持上午/下午
       const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
       if (timeMatch) {
-        const hour = timeMatch[1].padStart(2, '0');
+        let hour = parseInt(timeMatch[1]);
         const minute = timeMatch[2] ? timeMatch[2].padStart(2, '0') : '00';
-        time = `${hour}:${minute}`;
+        
+        // 处理上午/下午
+        if (input.includes('下午') && hour < 12) {
+          hour += 12;
+        } else if (input.includes('晚上') && hour < 12) {
+          hour += 12;
+        } else if (input.includes('中午') && hour === 12) {
+          hour = 12;
+        } else if (input.includes('凌晨') && hour >= 12) {
+          hour = hour - 12;
+        } else if (input.includes('上午') && hour === 12) {
+          hour = 0;
+        }
+        
+        time = `${hour.toString().padStart(2, '0')}:${minute}`;
         isAllDay = false;
         title = title.replace(timeMatch[0], '').trim();
       }
       
-      if (input.includes('明天')) {
+      // 处理日期 - 支持下周X
+      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const weekDayMatch = input.match(/下周([一二三四五六日天])/);
+      if (weekDayMatch) {
+        const weekDayMap = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0};
+        const targetDay = weekDayMap[weekDayMatch[1]];
+        const currentDay = today.getDay();
+        let daysToAdd = targetDay - currentDay;
+        if (daysToAdd <= 0) {
+          daysToAdd += 7;
+        }
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + daysToAdd);
+        date = formatDateToLocalISO(targetDate);
+        title = title.replace(weekDayMatch[0], '').trim();
+      } else if (input.includes('明天')) {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         date = formatDateToLocalISO(tomorrow);
@@ -1522,15 +1590,26 @@
         dayAfter.setDate(dayAfter.getDate() + 2);
         date = formatDateToLocalISO(dayAfter);
         title = title.replace('后天', '').trim();
+      } else if (input.includes('大后天')) {
+        const dayAfterNext = new Date(today);
+        dayAfterNext.setDate(dayAfterNext.getDate() + 3);
+        date = formatDateToLocalISO(dayAfterNext);
+        title = title.replace('大后天', '').trim();
       }
       
-      title = title.replace(/下午|上午|中午|早上|晚上/g, '').trim();
+      // 清理标题中的时间词汇
+      title = title.replace(/下午|上午|中午|早上|晚上|凌晨/g, '').trim();
       if (!title) title = '新日程';
       
-      document.getElementById('eventTitle').value = title;
-      document.getElementById('eventDate').value = date;
-      document.getElementById('eventTime').value = time || '09:00';
-      document.getElementById('eventAllDay').checked = isAllDay;
+      // 显示预览弹窗（本地解析）
+      const fallbackData = {
+        title: title,
+        date: date,
+        time: time,
+        isAllDay: isAllDay,
+        contacts: []
+      };
+      showAIRecognitionPreview(fallbackData, input, false);
     }
     
     async function recognizeAIEdit() {
