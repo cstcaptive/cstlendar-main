@@ -1325,7 +1325,13 @@
 重要规则：
 1. 如果没有识别到具体时间，time设为null，isAllDay设为true
 2. 如果识别到具体时间，time设为该时间，isAllDay设为false
-3. 识别标题中的人物信息（如：小王、张三、李四等中文姓名，或英文名如Tom、Mary）
+3. 识别标题中的人物信息，包括：
+   - 完整姓名（如：张三、李四、王五）
+   - 姓氏+名字（如：小王、小李、老张）
+   - 姓氏+先生/女士/太太（如：王先生、李女士、张太太）
+   - 英文名（如：Tom、Mary、John）
+   - 职位称呼（如：经理、老师、医生）
+   - 亲属称呼（如：爸爸、妈妈、哥哥）
 4. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
 5. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
 6. 如果没有指定日期，默认为今天
@@ -1335,8 +1341,14 @@
 输入："明天下午3点和小王13800138000开会"
 输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
 
-输入："后天和张三test@email.com吃饭"
-输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"张三","phone":"","email":"test@email.com"}]}` 
+输入："后天和王先生test@email.com吃饭"
+输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"王先生","phone":"","email":"test@email.com"}]}
+
+输入："今天和张太太视频会议"
+输出：{"title":"视频会议","date":"今天的日期","time":null,"isAllDay":true,"contacts":[{"name":"张太太","phone":"","email":""}]}
+
+输入："和小李讨论项目"
+输出：{"title":"讨论项目","date":"今天的日期","time":null,"isAllDay":true,"contacts":[{"name":"小李","phone":"","email":""}]}` 
               },
               { role: 'user', content: input }
             ],
