@@ -1299,21 +1299,38 @@
                 role: 'system', 
                 content: `你是一个日程识别助手。请从用户输入中提取日程信息，返回JSON格式：
 {
-  "title": "日程标题",
+  "title": "日程标题（去除人物信息后的标题）",
   "date": "YYYY-MM-DD",
-  "time": "HH:MM",
-  "isAllDay": false
+  "time": "HH:MM 或 null",
+  "isAllDay": true/false,
+  "contacts": [
+    {
+      "name": "联系人姓名",
+      "phone": "手机号（如有）",
+      "email": "邮箱（如有）"
+    }
+  ]
 }
 当前日期：${formatDateToLocalISO(new Date())}
-注意：
-- 如果没有指定时间，time设为"09:00"
-- 如果是全天事件，isAllDay设为true，time设为null
-- 如果没有指定日期，默认为今天
-- 支持中文日期表达：明天、后天、大后天` 
+重要规则：
+1. 如果没有识别到具体时间，time设为null，isAllDay设为true
+2. 如果识别到具体时间，time设为该时间，isAllDay设为false
+3. 识别标题中的人物信息（如：小王、张三、李四等中文姓名，或英文名如Tom、Mary）
+4. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
+5. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
+6. 如果没有指定日期，默认为今天
+7. 支持中文日期表达：明天、后天、大后天
+
+示例：
+输入："明天下午3点和小王13800138000开会"
+输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
+
+输入："后天和张三test@email.com吃饭"
+输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"张三","phone":"","email":"test@email.com"}]}` 
               },
               { role: 'user', content: input }
             ],
-            max_tokens: 200
+            max_tokens: 300
           })
         });
         
@@ -1329,6 +1346,16 @@
             document.getElementById('eventDate').value = parsed.date || formatDateToLocalISO(new Date());
             document.getElementById('eventTime').value = parsed.time || '09:00';
             document.getElementById('eventAllDay').checked = parsed.isAllDay || false;
+            
+            // Handle contacts
+            if (parsed.contacts && parsed.contacts.length > 0) {
+              currentContacts = parsed.contacts.map(c => ({
+                name: c.name || '',
+                phone: c.phone || '',
+                email: c.email || ''
+              }));
+              renderContacts();
+            }
             return;
           }
         }
@@ -1339,14 +1366,16 @@
       // Fallback to simple pattern matching
       const today = new Date();
       let date = formatDateToLocalISO(today);
-      let time = '09:00';
+      let time = null;
       let title = input;
+      let isAllDay = true;
       
       const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
       if (timeMatch) {
         const hour = timeMatch[1].padStart(2, '0');
         const minute = timeMatch[2] ? timeMatch[2].padStart(2, '0') : '00';
         time = `${hour}:${minute}`;
+        isAllDay = false;
         title = title.replace(timeMatch[0], '').trim();
       }
       
@@ -1367,7 +1396,8 @@
       
       document.getElementById('eventTitle').value = title;
       document.getElementById('eventDate').value = date;
-      document.getElementById('eventTime').value = time;
+      document.getElementById('eventTime').value = time || '09:00';
+      document.getElementById('eventAllDay').checked = isAllDay;
     }
     
     async function recognizeAIEdit() {
@@ -1388,21 +1418,38 @@
                 role: 'system', 
                 content: `你是一个日程识别助手。请从用户输入中提取日程信息，返回JSON格式：
 {
-  "title": "日程标题",
+  "title": "日程标题（去除人物信息后的标题）",
   "date": "YYYY-MM-DD",
-  "time": "HH:MM",
-  "isAllDay": false
+  "time": "HH:MM 或 null",
+  "isAllDay": true/false,
+  "contacts": [
+    {
+      "name": "联系人姓名",
+      "phone": "手机号（如有）",
+      "email": "邮箱（如有）"
+    }
+  ]
 }
 当前日期：${formatDateToLocalISO(new Date())}
-注意：
-- 如果没有指定时间，time设为"09:00"
-- 如果是全天事件，isAllDay设为true，time设为null
-- 如果没有指定日期，默认为今天
-- 支持中文日期表达：明天、后天、大后天` 
+重要规则：
+1. 如果没有识别到具体时间，time设为null，isAllDay设为true
+2. 如果识别到具体时间，time设为该时间，isAllDay设为false
+3. 识别标题中的人物信息（如：小王、张三、李四等中文姓名，或英文名如Tom、Mary）
+4. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
+5. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
+6. 如果没有指定日期，默认为今天
+7. 支持中文日期表达：明天、后天、大后天
+
+示例：
+输入："明天下午3点和小王13800138000开会"
+输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
+
+输入："后天和张三test@email.com吃饭"
+输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"张三","phone":"","email":"test@email.com"}]}` 
               },
               { role: 'user', content: input }
             ],
-            max_tokens: 200
+            max_tokens: 300
           })
         });
         
@@ -1417,6 +1464,16 @@
             document.getElementById('editEventDate').value = parsed.date || formatDateToLocalISO(new Date());
             document.getElementById('editEventTime').value = parsed.time || '09:00';
             document.getElementById('editEventAllDay').checked = parsed.isAllDay || false;
+            
+            // Handle contacts
+            if (parsed.contacts && parsed.contacts.length > 0) {
+              editContacts = parsed.contacts.map(c => ({
+                name: c.name || '',
+                phone: c.phone || '',
+                email: c.email || ''
+              }));
+              renderContactsEdit();
+            }
             return;
           }
         }
@@ -1427,14 +1484,16 @@
       // Fallback to simple pattern matching
       const today = new Date();
       let date = formatDateToLocalISO(today);
-      let time = '09:00';
+      let time = null;
       let title = input;
+      let isAllDay = true;
       
       const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
       if (timeMatch) {
         const hour = timeMatch[1].padStart(2, '0');
         const minute = timeMatch[2] ? timeMatch[2].padStart(2, '0') : '00';
         time = `${hour}:${minute}`;
+        isAllDay = false;
         title = title.replace(timeMatch[0], '').trim();
       }
       
@@ -1450,7 +1509,8 @@
       
       document.getElementById('editEventTitle').value = title;
       document.getElementById('editEventDate').value = date;
-      document.getElementById('editEventTime').value = time;
+      document.getElementById('editEventTime').value = time || '09:00';
+      document.getElementById('editEventAllDay').checked = isAllDay;
     }
     
     // Contact management
