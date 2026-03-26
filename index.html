@@ -985,8 +985,13 @@
       </div>
       
       <div class="section-title">关联人</div>
-      <div id="contactList"></div>
-      <button class="add-contact-btn" onclick="addContact()">+ 添加联系人</button>
+      <div id="contactList">
+        <div class="contact-item">
+          <input type="text" placeholder="姓名" id="contactName" onchange="updateContactFromInput()">
+          <input type="text" placeholder="手机" id="contactPhone" onchange="updateContactFromInput()">
+          <input type="text" placeholder="邮箱" id="contactEmail" onchange="updateContactFromInput()">
+        </div>
+      </div>
       
       <div class="section-title">关联事件</div>
       <div class="relation-search">
@@ -1041,8 +1046,13 @@
       </div>
       
       <div class="section-title">关联人</div>
-      <div id="editContactList"></div>
-      <button class="add-contact-btn" onclick="addContactEdit()">+ 添加联系人</button>
+      <div id="editContactList">
+        <div class="contact-item">
+          <input type="text" placeholder="姓名" id="editContactName" onchange="updateContactFromInputEdit()">
+          <input type="text" placeholder="手机" id="editContactPhone" onchange="updateContactFromInputEdit()">
+          <input type="text" placeholder="邮箱" id="editContactEmail" onchange="updateContactFromInputEdit()">
+        </div>
+      </div>
       
       <div class="section-title">关联事件</div>
       <div class="relation-search">
@@ -1354,7 +1364,10 @@
                 phone: c.phone || '',
                 email: c.email || ''
               }));
-              renderContacts();
+              // Fill contact input fields
+              document.getElementById('contactName').value = currentContacts[0].name;
+              document.getElementById('contactPhone').value = currentContacts[0].phone;
+              document.getElementById('contactEmail').value = currentContacts[0].email;
             }
             return;
           }
@@ -1472,7 +1485,10 @@
                 phone: c.phone || '',
                 email: c.email || ''
               }));
-              renderContactsEdit();
+              // Fill contact input fields
+              document.getElementById('editContactName').value = editContacts[0].name;
+              document.getElementById('editContactPhone').value = editContacts[0].phone;
+              document.getElementById('editContactEmail').value = editContacts[0].email;
             }
             return;
           }
@@ -1514,6 +1530,34 @@
     }
     
     // Contact management
+    function updateContactFromInput() {
+      const name = document.getElementById('contactName').value;
+      const phone = document.getElementById('contactPhone').value;
+      const email = document.getElementById('contactEmail').value;
+      
+      if (name || phone || email) {
+        if (currentContacts.length === 0) {
+          currentContacts.push({ name: name, phone: phone, email: email });
+        } else {
+          currentContacts[0] = { name: name, phone: phone, email: email };
+        }
+      }
+    }
+    
+    function updateContactFromInputEdit() {
+      const name = document.getElementById('editContactName').value;
+      const phone = document.getElementById('editContactPhone').value;
+      const email = document.getElementById('editContactEmail').value;
+      
+      if (name || phone || email) {
+        if (editContacts.length === 0) {
+          editContacts.push({ name: name, phone: phone, email: email });
+        } else {
+          editContacts[0] = { name: name, phone: phone, email: email };
+        }
+      }
+    }
+    
     function addContact() {
       currentContacts.push({ name: '', phone: '', email: '' });
       renderContacts();
