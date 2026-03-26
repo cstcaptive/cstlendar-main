@@ -1141,7 +1141,11 @@
           <label class="form-label">模型</label>
           <input type="text" class="form-input" id="modelName" placeholder="gpt-3.5-turbo">
         </div>
-        <button class="settings-btn" onclick="saveAIConfig()">保存 AI 配置</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="settings-btn" onclick="saveAIConfig()" style="flex: 1;">保存 AI 配置</button>
+          <button class="settings-btn" onclick="testAIConnection()" style="flex: 1; background-color: #10b981; color: white;">测试连接</button>
+          <div id="connectionStatus" style="width: 20px; height: 20px; border-radius: 50%; background-color: #cbd5e1;"></div>
+        </div>
       </div>
       
       <div class="settings-section">
@@ -1244,18 +1248,100 @@
       }
     }
     
-    // AI Recognition (simple local implementation)
-    function recognizeAI() {
+    // Test AI connection
+    async function testAIConnection() {
+      const statusEl = document.getElementById('connectionStatus');
+      statusEl.style.backgroundColor = '#fbbf24'; // Yellow for testing
+      
+      try {
+        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: aiConfig.model,
+            messages: [{ role: 'user', content: 'Hello' }],
+            max_tokens: 10
+          })
+        });
+        
+        if (response.ok) {
+          statusEl.style.backgroundColor = '#10b981'; // Green for success
+          alert('连接成功！');
+        } else {
+          statusEl.style.backgroundColor = '#ef4444'; // Red for failure
+          alert('连接失败：' + response.status);
+        }
+      } catch (error) {
+        statusEl.style.backgroundColor = '#ef4444'; // Red for failure
+        alert('连接失败：' + error.message);
+      }
+    }
+    
+    // AI Recognition using user's API
+    async function recognizeAI() {
       const input = document.getElementById('aiInput').value.trim();
       if (!input) return;
       
-      // Simple pattern matching
+      try {
+        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: aiConfig.model,
+            messages: [
+              { 
+                role: 'system', 
+                content: `你是一个日程识别助手。请从用户输入中提取日程信息，返回JSON格式：
+{
+  "title": "日程标题",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM",
+  "isAllDay": false
+}
+当前日期：${formatDateToLocalISO(new Date())}
+注意：
+- 如果没有指定时间，time设为"09:00"
+- 如果是全天事件，isAllDay设为true，time设为null
+- 如果没有指定日期，默认为今天
+- 支持中文日期表达：明天、后天、大后天` 
+              },
+              { role: 'user', content: input }
+            ],
+            max_tokens: 200
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const aiResponse = data.choices[0].message.content;
+          
+          // Parse JSON from AI response
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            document.getElementById('eventTitle').value = parsed.title || input;
+            document.getElementById('eventDate').value = parsed.date || formatDateToLocalISO(new Date());
+            document.getElementById('eventTime').value = parsed.time || '09:00';
+            document.getElementById('eventAllDay').checked = parsed.isAllDay || false;
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('AI recognition failed:', error);
+      }
+      
+      // Fallback to simple pattern matching
       const today = new Date();
       let date = formatDateToLocalISO(today);
       let time = '09:00';
       let title = input;
       
-      // Extract time
       const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
       if (timeMatch) {
         const hour = timeMatch[1].padStart(2, '0');
@@ -1264,7 +1350,6 @@
         title = title.replace(timeMatch[0], '').trim();
       }
       
-      // Extract date keywords
       if (input.includes('明天')) {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1277,7 +1362,6 @@
         title = title.replace('后天', '').trim();
       }
       
-      // Clean up title
       title = title.replace(/下午|上午|中午|早上|晚上/g, '').trim();
       if (!title) title = '新日程';
       
@@ -1286,10 +1370,61 @@
       document.getElementById('eventTime').value = time;
     }
     
-    function recognizeAIEdit() {
+    async function recognizeAIEdit() {
       const input = document.getElementById('editAiInput').value.trim();
       if (!input) return;
       
+      try {
+        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: aiConfig.model,
+            messages: [
+              { 
+                role: 'system', 
+                content: `你是一个日程识别助手。请从用户输入中提取日程信息，返回JSON格式：
+{
+  "title": "日程标题",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM",
+  "isAllDay": false
+}
+当前日期：${formatDateToLocalISO(new Date())}
+注意：
+- 如果没有指定时间，time设为"09:00"
+- 如果是全天事件，isAllDay设为true，time设为null
+- 如果没有指定日期，默认为今天
+- 支持中文日期表达：明天、后天、大后天` 
+              },
+              { role: 'user', content: input }
+            ],
+            max_tokens: 200
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const aiResponse = data.choices[0].message.content;
+          
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            document.getElementById('editEventTitle').value = parsed.title || input;
+            document.getElementById('editEventDate').value = parsed.date || formatDateToLocalISO(new Date());
+            document.getElementById('editEventTime').value = parsed.time || '09:00';
+            document.getElementById('editEventAllDay').checked = parsed.isAllDay || false;
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('AI recognition failed:', error);
+      }
+      
+      // Fallback to simple pattern matching
       const today = new Date();
       let date = formatDateToLocalISO(today);
       let time = '09:00';
@@ -1709,7 +1844,45 @@
       input.value = '';
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
       
-      setTimeout(() => {
+      try {
+        // Prepare events context for AI
+        const eventsContext = events.length > 0 
+          ? `用户的日程数据：\n${events.map(e => `- ${e.title} (${e.date} ${e.startTime || '全天'})`).join('\n')}`
+          : '用户目前没有日程。';
+        
+        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: aiConfig.model,
+            messages: [
+              { 
+                role: 'system', 
+                content: `你是 CSTlendar 智能日程助手。你可以帮助用户查询、分析和管理日程。${eventsContext}` 
+              },
+              { role: 'user', content: message }
+            ],
+            max_tokens: 500
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const aiResponse = data.choices[0].message.content;
+          
+          messagesContainer.innerHTML += `
+            <div class="chat-message assistant">
+              <div class="chat-bubble">${aiResponse}</div>
+            </div>
+          `;
+        } else {
+          throw new Error('API 请求失败');
+        }
+      } catch (error) {
+        // Fallback to local response if API fails
         let response = '';
         
         if (message.includes('日程') || message.includes('安排')) {
@@ -1731,9 +1904,9 @@
             <div class="chat-bubble">${response}</div>
           </div>
         `;
-        
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }, 500);
+      }
+      
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     
     // Graph Search Modal
