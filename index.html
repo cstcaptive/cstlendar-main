@@ -1854,6 +1854,10 @@
       document.getElementById('editAiInput').value = '';
       
       editContacts = event.contacts ? [...event.contacts] : [];
+      // 如果没有联系人，初始化一个空联系人
+      if (editContacts.length === 0) {
+        editContacts = [{ name: '', phone: '', email: '' }];
+      }
       renderContactsEdit();
       
       if (event.parentId) {
