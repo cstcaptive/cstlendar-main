@@ -1364,10 +1364,8 @@
                 phone: c.phone || '',
                 email: c.email || ''
               }));
-              // Fill contact input fields
-              document.getElementById('contactName').value = currentContacts[0].name;
-              document.getElementById('contactPhone').value = currentContacts[0].phone;
-              document.getElementById('contactEmail').value = currentContacts[0].email;
+              // 重新渲染联系人输入框
+              renderContacts();
             }
             return;
           }
