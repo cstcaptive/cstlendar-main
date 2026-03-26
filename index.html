@@ -985,13 +985,8 @@
       </div>
       
       <div class="section-title">关联人</div>
-      <div id="contactList">
-        <div class="contact-item">
-          <input type="text" placeholder="姓名" id="contactName" onchange="updateContactFromInput()">
-          <input type="text" placeholder="手机" id="contactPhone" onchange="updateContactFromInput()">
-          <input type="text" placeholder="邮箱" id="contactEmail" onchange="updateContactFromInput()">
-        </div>
-      </div>
+      <div id="contactList"></div>
+      <button class="add-contact-btn" onclick="addContact()">+ 添加联系人</button>
       
       <div class="section-title">关联事件</div>
       <div class="relation-search">
@@ -1046,13 +1041,8 @@
       </div>
       
       <div class="section-title">关联人</div>
-      <div id="editContactList">
-        <div class="contact-item">
-          <input type="text" placeholder="姓名" id="editContactName" onchange="updateContactFromInputEdit()">
-          <input type="text" placeholder="手机" id="editContactPhone" onchange="updateContactFromInputEdit()">
-          <input type="text" placeholder="邮箱" id="editContactEmail" onchange="updateContactFromInputEdit()">
-        </div>
-      </div>
+      <div id="editContactList"></div>
+      <button class="add-contact-btn" onclick="addContactEdit()">+ 添加联系人</button>
       
       <div class="section-title">关联事件</div>
       <div class="relation-search">
@@ -1129,60 +1119,6 @@
     </div>
   </div>
 
-  <!-- AI Recognition Preview Modal -->
-  <div class="modal-overlay hidden" id="aiPreviewModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title">🔍 AI 识别结果</h2>
-        <button class="modal-close" onclick="hideAIRecognitionPreview()">×</button>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">原始输入</label>
-        <div class="form-input" style="background-color: #f8fafc; border-color: #e2e8f0;">{{originalInput}}</div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">识别结果</label>
-        <div id="aiPreviewContent" style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
-          <!-- JSON content will be displayed here -->
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">提取的信息</label>
-        <div style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <strong>标题：</strong><span id="previewTitle"></span>
-            </div>
-            <div>
-              <strong>日期：</strong><span id="previewDate"></span>
-            </div>
-            <div>
-              <strong>时间：</strong><span id="previewTime"></span>
-            </div>
-            <div>
-              <strong>全天：</strong><span id="previewAllDay"></span>
-            </div>
-          </div>
-          
-          <div style="margin-top: 10px;">
-            <strong>关联人：</strong>
-            <div id="previewContacts" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
-              <!-- Contacts will be displayed here -->
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="modal-buttons">
-        <button class="modal-btn cancel" onclick="hideAIRecognitionPreview()">取消</button>
-        <button class="modal-btn save" onclick="applyAIRecognition()">应用识别结果</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Settings Modal -->
   <div class="modal-overlay hidden" id="settingsModal">
     <div class="modal">
@@ -1205,11 +1141,7 @@
           <label class="form-label">模型</label>
           <input type="text" class="form-input" id="modelName" placeholder="gpt-3.5-turbo">
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <button class="settings-btn" onclick="saveAIConfig()" style="flex: 1;">保存 AI 配置</button>
-          <button class="settings-btn" onclick="testAIConnection()" style="flex: 1; background-color: #10b981; color: white;">测试连接</button>
-          <div id="connectionStatus" style="width: 20px; height: 20px; border-radius: 50%; background-color: #cbd5e1;"></div>
-        </div>
+        <button class="settings-btn" onclick="saveAIConfig()">保存 AI 配置</button>
       </div>
       
       <div class="settings-section">
@@ -1237,8 +1169,8 @@
     let editContacts = [];
     let editRelation = null;
     let aiConfig = {
-      apiKey: 'sk-3qWP0EbLZzCqsiqGaLCm3JqB9aYt1STkHXrETggP7EV1ag73',
-      baseUrl: 'https://www.chataiapi.com',
+      apiKey: '',
+      baseUrl: 'https://api.openai.com',
       model: 'gpt-3.5-turbo'
     };
     
@@ -1312,495 +1244,171 @@
       }
     }
     
-    // Test AI connection
-    async function testAIConnection() {
-      const statusEl = document.getElementById('connectionStatus');
-      statusEl.style.backgroundColor = '#fbbf24'; // Yellow for testing
-      
-      try {
-        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${aiConfig.apiKey}`
-          },
-          body: JSON.stringify({
-            model: aiConfig.model,
-            messages: [{ role: 'user', content: 'Hello' }],
-            max_tokens: 10
-          })
-        });
-        
-        if (response.ok) {
-          statusEl.style.backgroundColor = '#10b981'; // Green for success
-          alert('连接成功！');
-        } else {
-          statusEl.style.backgroundColor = '#ef4444'; // Red for failure
-          alert('连接失败：' + response.status);
-        }
-      } catch (error) {
-        statusEl.style.backgroundColor = '#ef4444'; // Red for failure
-        alert('连接失败：' + error.message);
-      }
-    }
-    
-    // AI Recognition Preview Modal Functions
-    function showAIRecognitionPreview(parsedData, originalInput, isAISuccess = true) {
-      const modal = document.getElementById('aiPreviewModal');
-      const previewContent = document.getElementById('aiPreviewContent');
-      const previewTitle = document.getElementById('previewTitle');
-      const previewDate = document.getElementById('previewDate');
-      const previewTime = document.getElementById('previewTime');
-      const previewAllDay = document.getElementById('previewAllDay');
-      const previewContacts = document.getElementById('previewContacts');
-      
-      // Display original input
-      const originalInputDisplay = modal.querySelector('.form-input');
-      if (originalInputDisplay) {
-        originalInputDisplay.textContent = originalInput;
-      }
-      
-      // Display recognition status
-      const statusText = isAISuccess ? '✅ AI识别成功' : '⚠️ 本地解析（AI识别失败）';
-      const statusColor = isAISuccess ? '#10b981' : '#f59e0b';
-      
-      // Display JSON content with status
-      previewContent.innerHTML = `
-        <div style="margin-bottom: 8px; padding: 6px 10px; background-color: ${statusColor}20; border-radius: 6px; font-size: 11px; color: ${statusColor}; font-weight: bold;">
-          ${statusText}
-        </div>
-        <pre style="margin: 0; white-space: pre-wrap;">${JSON.stringify(parsedData, null, 2)}</pre>
-      `;
-      
-      // Display extracted information
-      previewTitle.textContent = parsedData.title || '未识别';
-      previewDate.textContent = parsedData.date || '未识别';
-      previewTime.textContent = parsedData.time || '未识别';
-      previewAllDay.textContent = parsedData.isAllDay ? '是' : '否';
-      
-      // Display contacts
-      if (parsedData.contacts && parsedData.contacts.length > 0) {
-        previewContacts.innerHTML = parsedData.contacts.map(contact => `
-          <span style="background-color: #eef2ff; padding: 4px 8px; border-radius: 6px; font-size: 11px; border: 1px solid #e2e8f0;">
-            ${contact.name || '未知'} ${contact.phone ? `(${contact.phone})` : ''} ${contact.email ? `(${contact.email})` : ''}
-          </span>
-        `).join('');
-      } else {
-        previewContacts.innerHTML = '<span style="color: #94a3b8; font-size: 11px;">未识别到关联人</span>';
-      }
-      
-      // Store the parsed data for later use
-      window.currentAIRecognitionData = parsedData;
-      
-      modal.classList.remove('hidden');
-    }
-    
-    function hideAIRecognitionPreview() {
-      document.getElementById('aiPreviewModal').classList.add('hidden');
-      window.currentAIRecognitionData = null;
-    }
-    
-    function applyAIRecognition() {
-      const data = window.currentAIRecognitionData;
-      if (!data) return;
-      
-      // Fill the form fields
-      document.getElementById('eventTitle').value = data.title || '';
-      document.getElementById('eventDate').value = data.date || formatDateToLocalISO(new Date());
-      document.getElementById('eventTime').value = data.time || '09:00';
-      document.getElementById('eventAllDay').checked = data.isAllDay || false;
-      
-      // Handle contacts
-      if (data.contacts && data.contacts.length > 0) {
-        currentContacts = data.contacts.map(c => ({
-          name: c.name || '',
-          phone: c.phone || '',
-          email: c.email || ''
-        }));
-        
-        // 自动填入第一个联系人到输入框
-        if (currentContacts.length > 0) {
-          const firstContact = currentContacts[0];
-          document.getElementById('contactName').value = firstContact.name;
-          document.getElementById('contactPhone').value = firstContact.phone;
-          document.getElementById('contactEmail').value = firstContact.email;
-        }
-        
-        renderContacts();
-      }
-      
-      hideAIRecognitionPreview();
-    }
-    
-    // AI Recognition using user's API
+    // AI Recognition (using AI service)
     async function recognizeAI() {
       const input = document.getElementById('aiInput').value.trim();
       if (!input) return;
       
+      const aiConfig = getAIConfig();
+      if (!aiConfig.apiKey) {
+        alert('请先在设置中配置 AI API');
+        return;
+      }
+      
+      setIsRecognizing(true);
       try {
-        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${aiConfig.apiKey}`
-          },
-          body: JSON.stringify({
-            model: aiConfig.model,
-            messages: [
-              { 
-                role: 'system', 
-                content: `你是一个智能日程识别助手。请从用户输入中提取日程信息，返回JSON格式。
-
-当前日期时间：
-- 日期：${formatDateToLocalISO(new Date())}
-- 星期：${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date().getDay()]}
-
-返回格式：
-{
-  "title": "日程标题（只保留事件描述，移除日期、时间、人物信息）",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM 或 null",
-  "isAllDay": true/false,
-  "contacts": [
-    {
-      "name": "联系人姓名",
-      "phone": "手机号（如有）",
-      "email": "邮箱（如有）"
-    }
-  ]
-}
-
-核心识别原则（必须遵守）：
-
-1. 日期识别规则：
-   - 没有提到日期 → 默认当天（今天）
-   - "今天"、"今日" → 当天
-   - "明天"、"明日" → 今天+1天
-   - "后天" → 今天+2天
-   - "大后天" → 今天+3天
-   - "下周" → 今天+7天
-   - "下周一"到"下周日" → 下一个星期X
-   - "这周X" → 本周星期X（如果已过则为下周）
-   - "三天后"、"3天后" → 今天+3天
-   - "一周后" → 今天+7天
-
-2. 时间识别规则：
-   - 没有提到时间 → time设为null，isAllDay设为true（全天事件）
-   - 提到具体时间 → time设为该时间，isAllDay设为false
-   - "下午3点" → "15:00"
-   - "上午9点" → "09:00"
-   - "晚上8点" → "20:00"
-   - "中午12点" → "12:00"
-   - "凌晨2点" → "02:00"
-   - 只说"3点"没有上午/下午 → 默认"15:00"（下午）
-
-3. 关联人识别规则（非常重要）：
-   - 识别模式："和X"、"与X"、"跟X"、"给X"、"向X"、"约X"等介词后面的人名
-   - 完整姓名（2-4个字）：张三、李四、王五、王守仁、王晓霞、李小明、张美丽
-   - 姓氏+昵称：小王、小李、老张、老王、小陈
-   - 姓氏+称呼：王先生、王小姐、王太太、王老师、王总、王同学、李女士、张太太
-   - 英文名：Tom、Mary、John、David
-   - 职位称呼：经理、老师、医生、老板、主任
-   - 亲属称呼：爸爸、妈妈、哥哥、姐姐、弟弟、妹妹
-
-4. 标题清理规则：
-   - 从标题中移除日期词汇：今天、明天、后天、下周、这周等
-   - 从标题中移除时间词汇：上午、下午、晚上、中午、凌晨、X点等
-   - 从标题中移除关联人信息
-   - 从标题中移除手机号和邮箱
-   - 只保留事件描述部分
-
-示例：
-
-输入："和小王吃饭"
-分析：没有日期→默认今天，没有时间→全天，有"和小王"→关联人小王
-输出：{"title":"吃饭","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"小王","phone":"","email":""}]}
-
-输入："明天下午3点和小王13800138000开会"
-分析：明天→今天+1，下午3点→15:00，和小王→关联人小王，13800138000→手机号
-输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
-
-输入："下周一上午9点和张三讨论项目"
-分析：下周一→下星期一，上午9点→09:00，和张三→关联人张三
-输出：{"title":"讨论项目","date":"下周一的日期","time":"09:00","isAllDay":false,"contacts":[{"name":"张三","phone":"","email":""}]}
-
-输入："和王守仁打球"
-分析：没有日期→默认今天，没有时间→全天，和王守仁→关联人王守仁
-输出：{"title":"打球","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"王守仁","phone":"","email":""}]}
-
-输入："和王晓霞吃饭"
-分析：没有日期→默认今天，没有时间→全天，和王晓霞→关联人王晓霞
-输出：{"title":"吃饭","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"王晓霞","phone":"","email":""}]}
-
-输入："与李女士见面"
-分析：没有日期→默认今天，没有时间→全天，与李女士→关联人李女士
-输出：{"title":"见面","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"李女士","phone":"","email":""}]}
-
-输入："跟王老师学习"
-分析：没有日期→默认今天，没有时间→全天，跟王老师→关联人王老师
-输出：{"title":"学习","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"王老师","phone":"","email":""}]}
-
-输入："和王总汇报"
-分析：没有日期→默认今天，没有时间→全天，和王总→关联人王总
-输出：{"title":"汇报","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"王总","phone":"","email":""}]}
-
-输入："与Tom开会"
-分析：没有日期→默认今天，没有时间→全天，与Tom→关联人Tom
-输出：{"title":"开会","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[{"name":"Tom","phone":"","email":""}]}
-
-输入："后天和王先生test@email.com吃饭"
-分析：后天→今天+2，没有时间→全天，和王先生→关联人王先生，test@email.com→邮箱
-输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"王先生","phone":"","email":"test@email.com"}]}
-
-输入："讨论项目"
-分析：没有日期→默认今天，没有时间→全天，没有人名→无关联人
-输出：{"title":"讨论项目","date":"${formatDateToLocalISO(new Date())}","time":null,"isAllDay":true,"contacts":[]}` 
-              },
-              { role: 'user', content: input }
-            ],
-            max_tokens: 300
-          })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const aiResponse = data.choices[0].message.content;
-          
-          // Parse JSON from AI response
-          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            showAIRecognitionPreview(parsed, input);
-            return;
-          }
+        const result = await callAIRecognition(aiConfig, input);
+        if (result.title) {
+          document.getElementById('eventTitle').value = result.title;
         }
-      } catch (error) {
-        console.error('AI recognition failed:', error);
-      }
-      
-      // Fallback to simple pattern matching
-      const today = new Date();
-      let date = formatDateToLocalISO(today);
-      let time = null;
-      let title = input;
-      let isAllDay = true;
-      
-      // 处理时间 - 支持上午/下午
-      const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
-      if (timeMatch) {
-        let hour = parseInt(timeMatch[1]);
-        const minute = timeMatch[2] ? timeMatch[2].padStart(2, '0') : '00';
-        
-        // 处理上午/下午
-        if (input.includes('下午') && hour < 12) {
-          hour += 12;
-        } else if (input.includes('晚上') && hour < 12) {
-          hour += 12;
-        } else if (input.includes('中午') && hour === 12) {
-          hour = 12;
-        } else if (input.includes('凌晨') && hour >= 12) {
-          hour = hour - 12;
-        } else if (input.includes('上午') && hour === 12) {
-          hour = 0;
+        if (result.date) {
+          document.getElementById('eventDate').value = result.date;
         }
-        
-        time = `${hour.toString().padStart(2, '0')}:${minute}`;
-        isAllDay = false;
-        title = title.replace(timeMatch[0], '').trim();
-      }
-      
-      // 处理日期 - 支持下周X
-      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      const weekDayMatch = input.match(/下周([一二三四五六日天])/);
-      if (weekDayMatch) {
-        const weekDayMap = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0};
-        const targetDay = weekDayMap[weekDayMatch[1]];
-        const currentDay = today.getDay();
-        let daysToAdd = targetDay - currentDay;
-        if (daysToAdd <= 0) {
-          daysToAdd += 7;
+        if (result.startTime) {
+          document.getElementById('eventTime').value = result.startTime;
         }
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + daysToAdd);
-        date = formatDateToLocalISO(targetDate);
-        title = title.replace(weekDayMatch[0], '').trim();
-      } else if (input.includes('明天')) {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        date = formatDateToLocalISO(tomorrow);
-        title = title.replace('明天', '').trim();
-      } else if (input.includes('后天')) {
-        const dayAfter = new Date(today);
-        dayAfter.setDate(dayAfter.getDate() + 2);
-        date = formatDateToLocalISO(dayAfter);
-        title = title.replace('后天', '').trim();
-      } else if (input.includes('大后天')) {
-        const dayAfterNext = new Date(today);
-        dayAfterNext.setDate(dayAfterNext.getDate() + 3);
-        date = formatDateToLocalISO(dayAfterNext);
-        title = title.replace('大后天', '').trim();
+        if (result.isAllDay !== undefined) {
+          document.getElementById('eventAllDay').checked = result.isAllDay;
+        }
+        if (result.contacts) {
+          currentContacts = result.contacts;
+          renderContacts();
+        }
+        if (result.reminder) {
+          // Set reminder values if needed
+        }
+        if (result.recurringCount) {
+          // Set recurring count if needed
+        }
+      } catch (err) {
+        console.error('AI Recognition Error:', err);
+        alert(err.message || 'AI 识别失败，请检查网络或 API 配置');
+      } finally {
+        setIsRecognizing(false);
       }
-      
-      // 清理标题中的时间词汇
-      title = title.replace(/下午|上午|中午|早上|晚上|凌晨/g, '').trim();
-      if (!title) title = '新日程';
-      
-      // 显示预览弹窗（本地解析）
-      const fallbackData = {
-        title: title,
-        date: date,
-        time: time,
-        isAllDay: isAllDay,
-        contacts: []
-      };
-      showAIRecognitionPreview(fallbackData, input, false);
     }
     
     async function recognizeAIEdit() {
       const input = document.getElementById('editAiInput').value.trim();
       if (!input) return;
       
+      const aiConfig = getAIConfig();
+      if (!aiConfig.apiKey) {
+        alert('请先在设置中配置 AI API');
+        return;
+      }
+      
+      setIsRecognizing(true);
       try {
-        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${aiConfig.apiKey}`
-          },
-          body: JSON.stringify({
-            model: aiConfig.model,
-            messages: [
-              { 
-                role: 'system', 
-                content: `你是一个日程识别助手。请从用户输入中提取日程信息，返回JSON格式：
-{
-  "title": "日程标题（去除人物信息后的标题）",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM 或 null",
-  "isAllDay": true/false,
-  "contacts": [
-    {
-      "name": "联系人姓名",
-      "phone": "手机号（如有）",
-      "email": "邮箱（如有）"
-    }
-  ]
-}
-当前日期：${formatDateToLocalISO(new Date())}
-重要规则：
-1. 如果没有识别到具体时间，time设为null，isAllDay设为true
-2. 如果识别到具体时间，time设为该时间，isAllDay设为false
-3. 识别标题中的人物信息（如：小王、张三、李四等中文姓名，或英文名如Tom、Mary）
-4. 如果标题中包含手机号或邮箱，提取出来作为联系人信息
-5. 将人物信息、手机号、邮箱从标题中移除，只保留事件描述
-6. 如果没有指定日期，默认为今天
-7. 支持中文日期表达：明天、后天、大后天
-
-示例：
-输入："明天下午3点和小王13800138000开会"
-输出：{"title":"开会","date":"明天的日期","time":"15:00","isAllDay":false,"contacts":[{"name":"小王","phone":"13800138000","email":""}]}
-
-输入："后天和张三test@email.com吃饭"
-输出：{"title":"吃饭","date":"后天的日期","time":null,"isAllDay":true,"contacts":[{"name":"张三","phone":"","email":"test@email.com"}]}` 
-              },
-              { role: 'user', content: input }
-            ],
-            max_tokens: 300
-          })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const aiResponse = data.choices[0].message.content;
-          
-          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            document.getElementById('editEventTitle').value = parsed.title || input;
-            document.getElementById('editEventDate').value = parsed.date || formatDateToLocalISO(new Date());
-            document.getElementById('editEventTime').value = parsed.time || '09:00';
-            document.getElementById('editEventAllDay').checked = parsed.isAllDay || false;
-            
-            // Handle contacts
-            if (parsed.contacts && parsed.contacts.length > 0) {
-              editContacts = parsed.contacts.map(c => ({
-                name: c.name || '',
-                phone: c.phone || '',
-                email: c.email || ''
-              }));
-              // Fill contact input fields
-              document.getElementById('editContactName').value = editContacts[0].name;
-              document.getElementById('editContactPhone').value = editContacts[0].phone;
-              document.getElementById('editContactEmail').value = editContacts[0].email;
-            }
-            return;
-          }
+        const result = await callAIRecognition(aiConfig, input);
+        if (result.title) {
+          document.getElementById('editEventTitle').value = result.title;
         }
-      } catch (error) {
-        console.error('AI recognition failed:', error);
+        if (result.date) {
+          document.getElementById('editEventDate').value = result.date;
+        }
+        if (result.startTime) {
+          document.getElementById('editEventTime').value = result.startTime;
+        }
+        if (result.isAllDay !== undefined) {
+          document.getElementById('editEventAllDay').checked = result.isAllDay;
+        }
+        if (result.contacts) {
+          editContacts = result.contacts;
+          renderContactsEdit();
+        }
+      } catch (err) {
+        console.error('AI Recognition Error:', err);
+        alert(err.message || 'AI 识别失败，请检查网络或 API 配置');
+      } finally {
+        setIsRecognizing(false);
+      }
+    }
+    
+    function getAIConfig() {
+      const savedConfig = localStorage.getItem('smartflow_ai_config');
+      const defaultConfig = {
+        apiKey: 'sk-3qWP0EbLZzCqsiqGaLCm3JqB9aYt1STkHXrETggP7EV1ag73',
+        baseUrl: 'https://www.chataiapi.com',
+        model: 'gemini-2.5-flash'
+      };
+      
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          return { ...defaultConfig, ...config };
+        } catch (e) {
+          console.error('Failed to parse saved AI config', e);
+        }
+      }
+      return defaultConfig;
+    }
+    
+    async function callAIRecognition(config, text) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const todayStr = now.toISOString().split('T')[0];
+      
+      const systemInstruction = `
+        你是一个专业的日程管理助手。你的任务是从用户输入的文本中提取日程信息。
+        
+        规则：
+        1. 提取日期和时间。如果没有年份，默认为 ${currentYear}。如果没有日期，默认为今天 (${todayStr})。如果没有具体时间，标记为全天 (isAllDay: true)。
+        2. 提取标题。从原句中截取最能代表事件的连续片段。不要编造标题。
+        3. 剥离信息。标题中不应包含已提取的时间、日期等信息。
+        4. 提取联系人。识别姓名、电话、邮箱。仅提取关键人物。
+        5. 提取提醒。识别如"提前一小时"、"一天前"等意图。如果提到"出发前"但没说时间，默认为提前30分钟。
+        6. 提取循环次数 (recurringCount)。如果用户提到"连续4周"、"每周五共3次"等，提取次数（最大30，默认1）。
+        7. 返回严格的 JSON 格式。
+        
+        JSON 结构示例：
+        {
+          "title": "吃饭",
+          "date": "2026-02-28",
+          "startTime": "15:00",
+          "isAllDay": false,
+          "contacts": [{"name": "张三", "phone": "13800000000", "email": "test@test.com"}],
+          "reminder": {"days": 0, "hours": 1, "minutes": 0},
+          "recurringCount": 1
+        }
+      `;
+      
+      const prompt = `用户输入： "${text}" \n 当前时间： ${now.toLocaleString()}`;
+      
+      const response = await fetch(config.baseUrl + '/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + config.apiKey
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 500
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('AI API 调用失败: ' + response.status);
       }
       
-      // Fallback to simple pattern matching
-      const today = new Date();
-      let date = formatDateToLocalISO(today);
-      let time = null;
-      let title = input;
-      let isAllDay = true;
+      const data = await response.json();
+      const content = data.choices[0].message.content;
       
-      const timeMatch = input.match(/(\d{1,2})[点:：](\d{0,2})/);
-      if (timeMatch) {
-        const hour = timeMatch[1].padStart(2, '0');
-        const minute = timeMatch[2] ? timeMatch[2].padStart(2, '0') : '00';
-        time = `${hour}:${minute}`;
-        isAllDay = false;
-        title = title.replace(timeMatch[0], '').trim();
+      // Extract JSON from response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('AI 返回格式错误');
       }
       
-      if (input.includes('明天')) {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        date = formatDateToLocalISO(tomorrow);
-        title = title.replace('明天', '').trim();
-      }
-      
-      title = title.replace(/下午|上午|中午|早上|晚上/g, '').trim();
-      if (!title) title = '新日程';
-      
-      document.getElementById('editEventTitle').value = title;
-      document.getElementById('editEventDate').value = date;
-      document.getElementById('editEventTime').value = time || '09:00';
-      document.getElementById('editEventAllDay').checked = isAllDay;
+      return JSON.parse(jsonMatch[0]);
     }
     
     // Contact management
-    function updateContactFromInput() {
-      const name = document.getElementById('contactName').value;
-      const phone = document.getElementById('contactPhone').value;
-      const email = document.getElementById('contactEmail').value;
-      
-      if (name || phone || email) {
-        if (currentContacts.length === 0) {
-          currentContacts.push({ name: name, phone: phone, email: email });
-        } else {
-          currentContacts[0] = { name: name, phone: phone, email: email };
-        }
-      }
-    }
-    
-    function updateContactFromInputEdit() {
-      const name = document.getElementById('editContactName').value;
-      const phone = document.getElementById('editContactPhone').value;
-      const email = document.getElementById('editContactEmail').value;
-      
-      if (name || phone || email) {
-        if (editContacts.length === 0) {
-          editContacts.push({ name: name, phone: phone, email: email });
-        } else {
-          editContacts[0] = { name: name, phone: phone, email: email };
-        }
-      }
-    }
-    
     function addContact() {
       currentContacts.push({ name: '', phone: '', email: '' });
       renderContacts();
@@ -1813,11 +1421,6 @@
     
     function renderContacts() {
       const container = document.getElementById('contactList');
-      // 确保总是显示至少一个联系人输入框
-      if (currentContacts.length === 0) {
-        currentContacts = [{ name: '', phone: '', email: '' }];
-      }
-      
       container.innerHTML = currentContacts.map((contact, index) => `
         <div class="contact-item">
           <button class="remove-contact-btn" onclick="removeContact(${index})">删除</button>
@@ -1830,11 +1433,6 @@
     
     function renderContactsEdit() {
       const container = document.getElementById('editContactList');
-      // 确保总是显示至少一个联系人输入框
-      if (editContacts.length === 0) {
-        editContacts = [{ name: '', phone: '', email: '' }];
-      }
-      
       container.innerHTML = editContacts.map((contact, index) => `
         <div class="contact-item">
           <button class="remove-contact-btn" onclick="removeContactEdit(${index})">删除</button>
@@ -2107,10 +1705,6 @@
       document.getElementById('editAiInput').value = '';
       
       editContacts = event.contacts ? [...event.contacts] : [];
-      // 如果没有联系人，初始化一个空联系人
-      if (editContacts.length === 0) {
-        editContacts = [{ name: '', phone: '', email: '' }];
-      }
       renderContactsEdit();
       
       if (event.parentId) {
@@ -2205,45 +1799,7 @@
       input.value = '';
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
       
-      try {
-        // Prepare events context for AI
-        const eventsContext = events.length > 0 
-          ? `用户的日程数据：\n${events.map(e => `- ${e.title} (${e.date} ${e.startTime || '全天'})`).join('\n')}`
-          : '用户目前没有日程。';
-        
-        const response = await fetch(aiConfig.baseUrl + '/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${aiConfig.apiKey}`
-          },
-          body: JSON.stringify({
-            model: aiConfig.model,
-            messages: [
-              { 
-                role: 'system', 
-                content: `你是 CSTlendar 智能日程助手。你可以帮助用户查询、分析和管理日程。${eventsContext}` 
-              },
-              { role: 'user', content: message }
-            ],
-            max_tokens: 500
-          })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const aiResponse = data.choices[0].message.content;
-          
-          messagesContainer.innerHTML += `
-            <div class="chat-message assistant">
-              <div class="chat-bubble">${aiResponse}</div>
-            </div>
-          `;
-        } else {
-          throw new Error('API 请求失败');
-        }
-      } catch (error) {
-        // Fallback to local response if API fails
+      setTimeout(() => {
         let response = '';
         
         if (message.includes('日程') || message.includes('安排')) {
@@ -2265,9 +1821,9 @@
             <div class="chat-bubble">${response}</div>
           </div>
         `;
-      }
-      
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }, 500);
     }
     
     // Graph Search Modal

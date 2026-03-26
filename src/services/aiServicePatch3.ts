@@ -51,13 +51,6 @@ export const recognizeSchedulePatch3 = async (text: string): Promise<AIRecogniti
     2. 提取标题。从原句中截取最能代表事件的连续片段。不要编造标题。
     3. 剥离信息。标题中不应包含已提取的时间、日期等信息。
     4. 提取联系人。识别姓名、电话、邮箱。仅提取关键人物。
-       - 识别模式："和X"、"与X"、"跟X"、"给X"、"向X"、"约X"等介词后面的人名
-       - 完整姓名（2-4个字）：张三、李四、王五、王守仁、王晓霞、李小明、张美丽
-       - 姓氏+昵称：小王、小李、老张、老王、小陈
-       - 姓氏+称呼：王先生、王小姐、王太太、王老师、王总、王同学、李女士、张太太
-       - 英文名：Tom、Mary、John、David
-       - 职位称呼：经理、老师、医生、老板、主任
-       - 亲属称呼：爸爸、妈妈、哥哥、姐姐、弟弟、妹妹
     5. 提取提醒。识别如“提前一小时”、“一天前”等意图。如果提到“出发前”但没说时间，默认为提前30分钟。
     6. 提取循环次数 (recurringCount)。如果用户提到“连续4周”、“每周五共3次”等，提取次数（最大30，默认1）。
     7. 返回严格的 JSON 格式。
@@ -72,10 +65,6 @@ export const recognizeSchedulePatch3 = async (text: string): Promise<AIRecogniti
       "reminder": {"days": 0, "hours": 1, "minutes": 0},
       "recurringCount": 1
     }
-    
-    特别示例：
-    输入："和王晓霞吃饭"
-    输出：{"title":"吃饭","date":"2026-02-28","startTime":null,"isAllDay":true,"contacts":[{"name":"王晓霞","phone":"","email":""}],"reminder":{"days":0,"hours":0,"minutes":30},"recurringCount":1}
   `;
 
   const prompt = `用户输入： "${text}" \n 当前时间： ${now.toLocaleString()}`;
