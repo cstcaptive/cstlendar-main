@@ -1570,6 +1570,11 @@
     
     function renderContacts() {
       const container = document.getElementById('contactList');
+      // 确保总是显示至少一个联系人输入框
+      if (currentContacts.length === 0) {
+        currentContacts = [{ name: '', phone: '', email: '' }];
+      }
+      
       container.innerHTML = currentContacts.map((contact, index) => `
         <div class="contact-item">
           <button class="remove-contact-btn" onclick="removeContact(${index})">删除</button>
