@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       react(), 
       tailwindcss(),
       reactClickToComponent({
-        editor: 'vscode', // 強制指定協議
+        editor: 'vscode', 
       }), 
     ],
     define: {
