@@ -1355,7 +1355,10 @@
       const previewContacts = document.getElementById('previewContacts');
       
       // Display original input
-      modal.querySelector('.form-input').textContent = originalInput;
+      const originalInputDisplay = modal.querySelector('.form-input');
+      if (originalInputDisplay) {
+        originalInputDisplay.textContent = originalInput;
+      }
       
       // Display JSON content
       previewContent.textContent = JSON.stringify(parsedData, null, 2);
