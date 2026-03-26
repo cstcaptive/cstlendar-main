@@ -2166,18 +2166,31 @@
           })
         });
         
-        if (response.ok) {
-          statusText.textContent = '连接成功';
-          statusDot.style.backgroundColor = '#22c55e';
-          alert('AI 连接测试成功！');
-        } else {
-          throw new Error('HTTP ' + response.status);
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
+        
+        const data = await response.json();
+        
+        // 检查响应格式是否正确
+        if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+          throw new Error('无效的响应格式');
+        }
+        
+        // 检查是否返回了预期的内容
+        const content = data.choices[0].message.content;
+        if (!content || content.trim() === '') {
+          throw new Error('AI 返回空响应');
+        }
+        
+        statusText.textContent = '连接成功';
+        statusDot.style.backgroundColor = '#22c55e';
+        alert('AI 连接测试成功！\n\n响应内容：' + content);
       } catch (err) {
         console.error('Connection test failed:', err);
         statusText.textContent = '连接失败';
         statusDot.style.backgroundColor = '#ef4444';
-        alert('AI 连接测试失败：' + err.message);
+        alert('AI 连接测试失败：\n' + err.message);
       }
     }
     
