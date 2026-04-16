@@ -12,6 +12,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Eye, EyeOff, Play, AlertCircle, CheckCircle2, Terminal, Download, Upload, RefreshCw } from 'lucide-react';
 import { dataServicePatch6 } from '../services/dataServicePatch6';
 
+const getWeekNumber = (d: Date): number => {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+};
+
 interface AISettingsPatch2 {
   apiKey: string;
   baseUrl: string;
@@ -23,11 +31,13 @@ interface AISettingsPatch2 {
 interface SettingsModalPatch2Props {
   isOpen: boolean;
   onClose: () => void;
+  weekOffset: number;
+  onWeekOffsetChange: (offset: number) => void;
 }
 
 const STORAGE_KEY = 'smartflow_patch2_ai_config_v2';
 
-export const SettingsModalPatch2: React.FC<SettingsModalPatch2Props> = ({ isOpen, onClose }) => {
+export const SettingsModalPatch2: React.FC<SettingsModalPatch2Props> = ({ isOpen, onClose, weekOffset, onWeekOffsetChange }) => {
   // 获取环境预设的 API Key
   const SYSTEM_DEFAULT_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -295,19 +305,48 @@ export const SettingsModalPatch2: React.FC<SettingsModalPatch2Props> = ({ isOpen
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                {/* Model */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">模型名称 (Model)</label>
-                  <input
-                    type="text"
-                    value={config.model}
-                    onChange={(e) => updateConfig({ model: e.target.value })}
-                    placeholder="gemini-2.5-flash"
-                    className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-4 text-slate-800 font-bold transition-all outline-none"
-                  />
-                </div>
-              </div>
+               <div className="grid grid-cols-1 gap-4">
+                 {/* Model */}
+                 <div className="space-y-2">
+                   <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">模型名称 (Model)</label>
+                   <input
+                     type="text"
+                     value={config.model}
+                     onChange={(e) => updateConfig({ model: e.target.value })}
+                     placeholder="gemini-2.5-flash"
+                     className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-4 text-slate-800 font-bold transition-all outline-none"
+                   />
+                 </div>
+
+                 {/* Week Number Offset */}
+                 <div className="space-y-2">
+                   <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">周次偏移设置</label>
+                   <div className="flex items-center gap-2">
+                     <button
+                       onClick={() => onWeekOffsetChange(weekOffset - 1)}
+                       className="w-12 h-12 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-600 rounded-xl font-bold text-xl transition-colors"
+                     >
+                       −
+                     </button>
+                     <div className="flex-1 bg-slate-50 rounded-2xl px-4 py-3 text-center">
+                       <span className="font-black text-lg">当前周次: W{getWeekNumber(new Date()) + weekOffset}</span>
+                       <p className="text-[10px] font-bold text-slate-400 mt-1">设置当前日期对应的周次，所有日期会自动修正</p>
+                     </div>
+                     <button
+                       onClick={() => onWeekOffsetChange(weekOffset + 1)}
+                       className="w-12 h-12 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-600 rounded-xl font-bold text-xl transition-colors"
+                     >
+                       +
+                     </button>
+                   </div>
+                   <button
+                     onClick={() => onWeekOffsetChange(0)}
+                     className="w-full text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                   >
+                     重置为系统默认周次
+                   </button>
+                 </div>
+               </div>
 
               {/* Data Management Section (Patch 6) */}
               <div className="pt-4 space-y-4">

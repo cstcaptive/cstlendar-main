@@ -30,12 +30,13 @@ interface DateInfo {
 }
 
 // --- Utils ---
-const getWeekNumber = (d: Date): number => {
+const getWeekNumber = (d: Date, weekOffset: number = 0): number => {
   const date = new Date(d.getTime());
   date.setHours(0, 0, 0, 0);
   date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
   const week1 = new Date(date.getFullYear(), 0, 4);
-  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  const calculatedWeek = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  return calculatedWeek + weekOffset;
 };
 
 export const formatDateToLocalISO = (date: Date): string => {
@@ -57,7 +58,7 @@ const getDaysDiff = (dateStr1: string, dateStr2: string): number => {
   return Math.round((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-const formatDateInfo = (date: Date): DateInfo => {
+const formatDateInfo = (date: Date, weekOffset: number = 0): DateInfo => {
   const today = new Date();
   const isToday = date.getDate() === today.getDate() && 
                   date.getMonth() === today.getMonth() && 
@@ -71,7 +72,7 @@ const formatDateInfo = (date: Date): DateInfo => {
     dayName: isToday ? '今天' : days[date.getDay()],
     dayNumber: date.getDate(),
     monthName: months[date.getMonth()],
-    weekNumber: getWeekNumber(date),
+    weekNumber: getWeekNumber(date, weekOffset),
     isToday
   };
 };
@@ -89,6 +90,14 @@ export default function App() {
   const [selectedGraphRoot, setSelectedGraphRoot] = useState<ScheduleEventPatch3 | null>(null);
   const [editingEvent, setEditingEvent] = useState<ScheduleEventPatch3 | null>(null);
   const [events, setEvents] = useState<ScheduleEventPatch3[]>([]);
+  const [weekOffset, setWeekOffset] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('smartflow_week_offset');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
 
   // Load events from localStorage
   useEffect(() => {
@@ -250,9 +259,9 @@ export default function App() {
     return Array.from({ length: 4 }, (_, i) => {
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
-      return formatDateInfo(d);
+      return formatDateInfo(d, weekOffset);
     });
-  }, [startDate]);
+  }, [startDate, weekOffset]);
 
   const handlePrevPage = () => {
     const newDate = new Date(startDate);
@@ -406,6 +415,11 @@ export default function App() {
       <SettingsModalPatch2 
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        weekOffset={weekOffset}
+        onWeekOffsetChange={(offset) => {
+          setWeekOffset(offset);
+          localStorage.setItem('smartflow_week_offset', String(offset));
+        }}
       />
 
       {/* PATCH3: Add Event Modal */}
