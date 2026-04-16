@@ -341,15 +341,19 @@ export default function App() {
             const allDayEvents = events.filter(e => e.date === dayStr && e.isAllDay);
             return (
               <div key={idx} className="border-r border-slate-50 last:border-r-0 h-full p-1 space-y-1">
-                {allDayEvents.map(event => (
-                  <div 
-                    key={event.id} 
-                    onClick={() => handleEditEvent(event)}
-                    className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate cursor-pointer hover:bg-indigo-700 transition-colors"
-                  >
-                    {event.title}
-                  </div>
-                ))}
+{allDayEvents.map(event => (
+  <div 
+    key={event.id} 
+    onClick={() => handleEditEvent(event)}
+    className={`${
+      event.completed ? 'bg-slate-100 text-slate-500 border-l-4 border-slate-300' : 'bg-indigo-600/10 text-indigo-700 border-l-4 border-indigo-600'
+    } text-[9px] font-bold px-1.5 py-0.5 rounded-r-md truncate cursor-pointer hover:${
+      event.completed ? 'bg-slate-200' : 'bg-indigo-600/20'
+    } transition-colors`}
+  >
+    {event.title}
+  </div>
+))}
               </div>
             );
           })}

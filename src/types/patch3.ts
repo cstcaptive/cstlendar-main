@@ -26,6 +26,7 @@ export interface ScheduleEventPatch3 {
   createdAt: number;
   recurringGroupId?: string; // Patch 11
   recurringSequence?: number; // Patch 11
+  completed?: boolean; // Whether the event is completed
 }
 
 export interface AIRecognitionResultPatch3 {

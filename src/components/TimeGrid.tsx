@@ -51,9 +51,52 @@ export const TimeGrid: React.FC<TimeGridProps> = ({ displayDays, events, onEvent
             // Filter events for this specific day
             const dayStr = formatDateToLocalISO(day.date);
             const dayEvents = events.filter(e => e.date === dayStr && !e.isAllDay);
+            
+            // Calculate current time indicator for today's column
+            const now = new Date();
+            const todayStr = formatDateToLocalISO(now);
+            const isToday = dayStr === todayStr;
+            let currentTimeElement = null;
+            
+            if (isToday) {
+              const currentHour = now.getHours();
+              const currentMinute = now.getMinutes();
+              
+              // Check if current time is within displayed hours range
+              if (currentHour >= TIME_CONFIG.START_HOUR && currentHour <= TIME_CONFIG.MAX_END_HOUR) {
+                const topOffset = (currentHour - TIME_CONFIG.START_HOUR + currentMinute / 60) * TIME_CONFIG.HOUR_HEIGHT;
+                
+                currentTimeElement = (
+                  <div 
+                    style={{ 
+                      position: 'absolute',
+                      top: `${topOffset}px`,
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      backgroundColor: '#ef4444',
+                      zIndex: 10
+                    }}
+                  >
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        left: '-4px',
+                        top: '-3px',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ef4444'
+                      }}
+                    />
+                  </div>
+                );
+              }
+            }
 
             return (
               <div key={dayIdx} className="border-r border-slate-50 last:border-r-0 h-full relative">
+                {currentTimeElement}
                 {dayEvents.map(event => {
                   if (!event.startTime) return null;
                   const [h, m] = event.startTime.split(':').map(Number);
@@ -67,14 +110,22 @@ export const TimeGrid: React.FC<TimeGridProps> = ({ displayDays, events, onEvent
                         top: `${topOffset}px`,
                         height: '32px' // Default height for events without end time
                       }}
-                      className="absolute left-1 right-1 bg-indigo-600/10 border-l-4 border-indigo-600 rounded-r-lg p-1 overflow-hidden cursor-pointer hover:bg-indigo-600/20 transition-colors"
+                      className={`absolute left-1 right-1 ${
+  event.completed ? 'bg-slate-100 border-l-4 border-slate-300' : 'bg-indigo-600/10 border-l-4 border-indigo-600'
+} rounded-r-lg p-1 overflow-hidden cursor-pointer hover:${
+  event.completed ? 'bg-slate-200' : 'bg-indigo-600/20'
+} transition-colors`}
                     >
-                      <div className="text-[10px] font-black text-indigo-700 truncate leading-tight">
-                        {event.title}
-                      </div>
-                      <div className="text-[8px] font-bold text-indigo-400 leading-none">
-                        {event.startTime}
-                      </div>
+<div className={`text-[10px] font-black ${
+  event.completed ? 'text-slate-500' : 'text-indigo-700'
+} truncate leading-tight`}>
+  {event.title}
+</div>
+<div className={`text-[8px] font-bold ${
+  event.completed ? 'text-slate-400' : 'text-indigo-400'
+} leading-none`}>
+  {event.startTime}
+</div>
                     </div>
                   );
                 })}

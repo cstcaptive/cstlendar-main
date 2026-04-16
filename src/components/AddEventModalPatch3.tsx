@@ -40,37 +40,39 @@ export const AddEventModalPatch3: React.FC<AddEventModalPatch3Props> = ({
   const [inputText, setInputText] = useState('');
   const [isRecognizing, setIsRecognizing] = useState(false);
   
-  // Form State
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(formatDateToLocalISO(new Date()));
-  const [startTime, setStartTime] = useState('09:00');
-  const [isAllDay, setIsAllDay] = useState(false);
-  const [contacts, setContacts] = useState<ContactPatch3[]>([]);
-  const [reminder, setReminder] = useState<ReminderPatch3>({ days: 0, hours: 0, minutes: 30 });
-  const [parentId, setParentId] = useState<string | undefined>(undefined);
-  const [recurringCount, setRecurringCount] = useState(1);
-  const [recurringPrompt, setRecurringPrompt] = useState<{
-    isOpen: boolean;
-    action: 'save' | 'delete';
-    event?: ScheduleEventPatch3;
-  }>({ isOpen: false, action: 'save' });
+// Form State
+const [title, setTitle] = useState('');
+const [date, setDate] = useState(formatDateToLocalISO(new Date()));
+const [startTime, setStartTime] = useState('09:00');
+const [isAllDay, setIsAllDay] = useState(false);
+const [contacts, setContacts] = useState<ContactPatch3[]>([]);
+const [reminder, setReminder] = useState<ReminderPatch3>({ days: 0, hours: 0, minutes: 30 });
+const [parentId, setParentId] = useState<string | undefined>(undefined);
+const [recurringCount, setRecurringCount] = useState(1);
+const [recurringPrompt, setRecurringPrompt] = useState<{
+  isOpen: boolean;
+  action: 'save' | 'delete';
+  event?: ScheduleEventPatch3;
+}>({ isOpen: false, action: 'save' });
+const [editingEventState, setEditingEventState] = useState<ScheduleEventPatch3 | null>(editingEvent || null);
 
-  // Populate form when editing
-  useEffect(() => {
-    if (editingEvent) {
-      setTitle(editingEvent.title);
-      setDate(editingEvent.date);
-      setStartTime(editingEvent.startTime || '09:00');
-      setIsAllDay(editingEvent.isAllDay);
-      setContacts(editingEvent.contacts);
-      setReminder(editingEvent.reminder);
-      setParentId(editingEvent.parentId);
-      setInputText('');
-      setRecurringCount(1);
-    } else {
-      resetForm();
-    }
-  }, [editingEvent, isOpen]);
+// Populate form when editing
+useEffect(() => {
+  if (editingEvent) {
+    setTitle(editingEvent.title);
+    setDate(editingEvent.date);
+    setStartTime(editingEvent.startTime || '09:00');
+    setIsAllDay(editingEvent.isAllDay);
+    setContacts(editingEvent.contacts);
+    setReminder(editingEvent.reminder);
+    setParentId(editingEvent.parentId);
+    setEditingEventState(editingEvent);
+    setInputText('');
+    setRecurringCount(1);
+  } else {
+    resetForm();
+  }
+}, [editingEvent, isOpen]);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,21 +122,22 @@ export const AddEventModalPatch3: React.FC<AddEventModalPatch3Props> = ({
     setContacts(contacts.filter((_, i) => i !== index));
   };
 
-  const triggerSave = () => {
-    if (!title) return alert('请输入标题');
-    const newEvent: ScheduleEventPatch3 = {
-      id: editingEvent ? editingEvent.id : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)),
-      title,
-      date,
-      startTime: isAllDay ? undefined : startTime,
-      isAllDay,
-      contacts,
-      reminder,
-      parentId,
-      createdAt: editingEvent ? editingEvent.createdAt : Date.now(),
-      recurringGroupId: editingEvent?.recurringGroupId,
-      recurringSequence: editingEvent?.recurringSequence,
-    };
+const triggerSave = () => {
+  if (!title) return alert('请输入标题');
+  const newEvent: ScheduleEventPatch3 = {
+    id: editingEvent ? editingEvent.id : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)),
+    title,
+    date,
+    startTime: isAllDay ? undefined : startTime,
+    isAllDay,
+    contacts,
+    reminder,
+    parentId,
+    createdAt: editingEvent ? editingEvent.createdAt : Date.now(),
+    recurringGroupId: editingEvent?.recurringGroupId,
+    recurringSequence: editingEvent?.recurringSequence,
+    completed: editingEventState?.completed,
+  };
 
     if (editingEvent?.recurringGroupId) {
       setRecurringPrompt({ isOpen: true, action: 'save', event: newEvent });
@@ -164,36 +167,38 @@ export const AddEventModalPatch3: React.FC<AddEventModalPatch3Props> = ({
     setRecurringPrompt({ isOpen: false, action: 'save' });
   };
 
-  const handleSave = () => {
-    if (!title) return alert('请输入标题');
-    const newEvent: ScheduleEventPatch3 = {
-      id: editingEvent ? editingEvent.id : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)),
-      title,
-      date,
-      startTime: isAllDay ? undefined : startTime,
-      isAllDay,
-      contacts,
-      reminder,
-      parentId,
-      createdAt: editingEvent ? editingEvent.createdAt : Date.now(),
-    };
-    onSave(newEvent);
-    resetForm();
-    onClose();
+const handleSave = () => {
+  if (!title) return alert('请输入标题');
+  const newEvent: ScheduleEventPatch3 = {
+    id: editingEvent ? editingEvent.id : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)),
+    title,
+    date,
+    startTime: isAllDay ? undefined : startTime,
+    isAllDay,
+    contacts,
+    reminder,
+    parentId,
+    createdAt: editingEvent ? editingEvent.createdAt : Date.now(),
+    completed: editingEventState?.completed,
   };
+  onSave(newEvent);
+  resetForm();
+  onClose();
+};
 
-  const resetForm = () => {
-    setInputText('');
-    setTitle('');
-    setDate(formatDateToLocalISO(new Date()));
-    setStartTime('09:00');
-    setIsAllDay(false);
-    setContacts([]);
-    setReminder({ days: 0, hours: 0, minutes: 30 });
-    setParentId(undefined);
-    setRecurringCount(1);
-    setRecurringPrompt({ isOpen: false, action: 'save' });
-  };
+const resetForm = () => {
+  setInputText('');
+  setTitle('');
+  setDate(formatDateToLocalISO(new Date()));
+  setStartTime('09:00');
+  setIsAllDay(false);
+  setContacts([]);
+  setReminder({ days: 0, hours: 0, minutes: 30 });
+  setParentId(undefined);
+  setRecurringCount(1);
+  setRecurringPrompt({ isOpen: false, action: 'save' });
+  setEditingEventState(null);
+};
 
   // Fuzzy search simulation for relations
   useEffect(() => {
@@ -426,47 +431,75 @@ export const AddEventModalPatch3: React.FC<AddEventModalPatch3Props> = ({
                   </div>
                 </div>
 
-                {/* Reminder */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">提醒设置</label>
-                  <div className="bg-slate-50 rounded-2xl p-5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                        <Bell className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-600">提前提醒</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col items-center">
-                        <input 
-                          type="number" 
-                          value={reminder.days} 
-                          onChange={(e) => setReminder({...reminder, days: parseInt(e.target.value) || 0})}
-                          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
-                        />
-                        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">天</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <input 
-                          type="number" 
-                          value={reminder.hours} 
-                          onChange={(e) => setReminder({...reminder, hours: parseInt(e.target.value) || 0})}
-                          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
-                        />
-                        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">时</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <input 
-                          type="number" 
-                          value={reminder.minutes} 
-                          onChange={(e) => setReminder({...reminder, minutes: parseInt(e.target.value) || 0})}
-                          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
-                        />
-                        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">分</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+{/* Reminder */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">提醒设置</label>
+  <div className="bg-slate-50 rounded-2xl p-5 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+        <Bell className="w-5 h-5" />
+      </div>
+      <span className="text-sm font-bold text-slate-600">提前提醒</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <div className="flex flex-col items-center">
+        <input 
+          type="number" 
+          value={reminder.days} 
+          onChange={(e) => setReminder({...reminder, days: parseInt(e.target.value) || 0})}
+          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
+        />
+        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">天</span>
+      </div>
+      <div className="flex flex-col items-center">
+        <input 
+          type="number" 
+          value={reminder.hours} 
+          onChange={(e) => setReminder({...reminder, hours: parseInt(e.target.value) || 0})}
+          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
+        />
+        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">时</span>
+      </div>
+      <div className="flex flex-col items-center">
+        <input 
+          type="number" 
+          value={reminder.minutes} 
+          onChange={(e) => setReminder({...reminder, minutes: parseInt(e.target.value) || 0})}
+          className="w-12 bg-white border border-slate-200 rounded-lg text-center py-1 font-bold text-sm"
+        />
+        <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">分</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/* Completion Status */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">完成状态</label>
+  <div className="bg-slate-50 rounded-2xl p-5 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+        <CheckCircle2 className="w-5 h-5" />
+      </div>
+      <span className="text-sm font-bold text-slate-600">已完成</span>
+    </div>
+<label className="flex items-center gap-2 cursor-pointer">
+  <input 
+    type="checkbox" 
+    checked={editingEventState?.completed || false} 
+    onChange={(e) => {
+      // Handle both check and uncheck properly
+      setEditingEventState({
+        ...editingEventState!, 
+        completed: e.target.checked
+      });
+    }}
+    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+  />
+  <span className="text-xs font-bold text-slate-500">标记为已完成</span>
+</label>
+  </div>
+</div>
 
                 {/* Relations */}
                 <div className="space-y-2">
